@@ -12,7 +12,7 @@ function generateId(): string {
 function safeStringify(value: unknown): string {
   try {
     return JSON.stringify(value);
-  } catch {
+  } catch (e) {
     return "[]";
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "Design Changelog",
+  "name": "Design Trail",
   "id": "design-changelog-plugin",
   "api": "1.0.0",
   "main": "dist/code.js",

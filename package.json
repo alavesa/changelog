@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Figma plugin that captures design snapshots and generates visual changelogs",
   "scripts": {
-    "build": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es2020 && cp ui/ui.html dist/ui.html",
-    "watch": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es2020 --watch"
+    "build": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es2017 --sourcemap && cp ui/ui.html dist/ui.html",
+    "watch": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es2017 --sourcemap --watch"
   },
   "devDependencies": {
     "@figma/plugin-typings": "^1.100.0",
