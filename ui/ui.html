@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    background: #2c2c2c;
+    color: #e0e0e0;
+    overflow-x: hidden;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #444;
+    background: #333;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: #999;
+    font-weight: 500;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab:hover { color: #ccc; }
+  .tab.active { color: #e0e0e0; border-bottom-color: #7B61FF; }
+
+  .tab-content { display: none; padding: 16px; }
+  .tab-content.active { display: block; }
+
+  /* Form elements */
+  input[type="text"], select {
+    width: 100%;
+    padding: 8px 10px;
+    background: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 12px;
+    outline: none;
+  }
+  input[type="text"]:focus, select:focus {
+    border-color: #7B61FF;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 4px;
+    color: #aaa;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .field { margin-bottom: 12px; }
+
+  button {
+    padding: 8px 16px;
+    background: #7B61FF;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  button:hover { background: #6B51EF; }
+  button:disabled { background: #555; cursor: not-allowed; color: #888; }
+
+  button.secondary {
+    background: #444;
+    color: #ddd;
+  }
+  button.secondary:hover { background: #555; }
+
+  button.danger {
+    background: transparent;
+    color: #F44336;
+    padding: 4px 8px;
+    width: auto;
+    font-size: 11px;
+  }
+  button.danger:hover { background: rgba(244, 67, 54, 0.1); }
+
+  /* Snapshot list */
+  .snapshot-list {
+    margin-top: 12px;
+  }
+  .snapshot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: #363636;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+  .snapshot-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .snapshot-label {
+    font-weight: 600;
+    color: #e0e0e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .snapshot-meta {
+    font-size: 10px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  /* Summary bar */
+  .summary-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: #363636;
+    border-radius: 4px;
+  }
+  .summary-stat {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .summary-stat .count { font-size: 18px; display: block; }
+  .stat-added { color: #4CAF50; }
+  .stat-removed { color: #F44336; }
+  .stat-modified { color: #FF9800; }
+
+  /* Changelog entries */
+  .change-section { margin-bottom: 16px; }
+  .change-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #444;
+  }
+
+  .change-entry {
+    padding: 8px 10px;
+    background: #363636;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.1s;
+  }
+  .change-entry:hover { background: #404040; }
+  .change-entry.added { border-left-color: #4CAF50; }
+  .change-entry.removed { border-left-color: #F44336; }
+  .change-entry.modified { border-left-color: #FF9800; }
+
+  .change-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-added { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+  .badge-removed { background: rgba(244, 67, 54, 0.2); color: #F44336; }
+  .badge-modified { background: rgba(255, 152, 0, 0.2); color: #FF9800; }
+
+  .badge-group {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 500;
+    background: #444;
+    color: #aaa;
+  }
+
+  .change-node-name {
+    font-weight: 600;
+    color: #e0e0e0;
+  }
+  .change-node-type {
+    color: #888;
+    font-size: 10px;
+  }
+
+  .change-details {
+    margin-top: 6px;
+    padding-left: 8px;
+  }
+  .prop-change {
+    font-size: 11px;
+    color: #bbb;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .prop-name { color: #aaa; font-weight: 500; }
+  .prop-old { color: #F44336; text-decoration: line-through; }
+  .prop-new { color: #4CAF50; }
+  .prop-value {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    background: #1e1e1e;
+    color: #e0e0e0;
+    padding: 10px 14px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    font-size: 12px;
+    z-index: 100;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+  .toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .toast.error { border-color: #F44336; }
+
+  .empty-state {
+    text-align: center;
+    color: #888;
+    padding: 24px 16px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" data-tab="capture">Capture</div>
+  <div class="tab" data-tab="compare">Compare</div>
+  <div class="tab" data-tab="changelog">Changelog</div>
+</div>
+
+<!-- Capture Tab -->
+<div id="tab-capture" class="tab-content active">
+  <div class="field">
+    <label>Snapshot Label</label>
+    <input type="text" id="snapshot-label" placeholder="e.g. v1 - Initial design">
+  </div>
+  <button id="btn-capture">Capture Snapshot</button>
+  <div class="snapshot-list" id="snapshot-list"></div>
+</div>
+
+<!-- Compare Tab -->
+<div id="tab-compare" class="tab-content">
+  <div class="field">
+    <label>From (older)</label>
+    <select id="select-from"><option value="">Loading...</option></select>
+  </div>
+  <div class="field">
+    <label>To (newer)</label>
+    <select id="select-to"><option value="">Loading...</option></select>
+  </div>
+  <button id="btn-compare" disabled>Compare Snapshots</button>
+</div>
+
+<!-- Changelog Tab -->
+<div id="tab-changelog" class="tab-content">
+  <div id="changelog-empty" class="empty-state">
+    Compare two snapshots to see changes here.
+  </div>
+  <div id="changelog-content" style="display: none;">
+    <div class="summary-bar" id="summary-bar"></div>
+    <div id="changelog-entries"></div>
+    <button id="btn-export" class="secondary" style="margin-top: 12px;">Copy as Markdown</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // State
+  let snapshots = [];
+  let currentChangelog = null;
+
+  // Elements
+  const tabs = document.querySelectorAll('.tab');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const snapshotLabel = document.getElementById('snapshot-label');
+  const btnCapture = document.getElementById('btn-capture');
+  const snapshotList = document.getElementById('snapshot-list');
+  const selectFrom = document.getElementById('select-from');
+  const selectTo = document.getElementById('select-to');
+  const btnCompare = document.getElementById('btn-compare');
+  const changelogEmpty = document.getElementById('changelog-empty');
+  const changelogContent = document.getElementById('changelog-content');
+  const summaryBar = document.getElementById('summary-bar');
+  const changelogEntries = document.getElementById('changelog-entries');
+  const btnExport = document.getElementById('btn-export');
+  const toast = document.getElementById('toast');
+
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+
+      if (tab.dataset.tab === 'compare') {
+        parent.postMessage({ pluginMessage: { type: 'list-snapshots' } }, '*');
+      }
+    });
+  });
+
+  // Toast
+  let toastTimer;
+  function showToast(message, isError) {
+    toast.textContent = message;
+    toast.className = 'toast visible' + (isError ? ' error' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.className = 'toast'; }, 3000);
+  }
+
+  // Capture
+  btnCapture.addEventListener('click', () => {
+    const label = snapshotLabel.value.trim();
+    if (!label) {
+      showToast('Please enter a label for the snapshot.', true);
+      return;
+    }
+    parent.postMessage({ pluginMessage: { type: 'capture-snapshot', label } }, '*');
+    snapshotLabel.value = '';
+  });
+
+  // Render snapshot list
+  function renderSnapshotList() {
+    if (snapshots.length === 0) {
+      snapshotList.innerHTML = '<div class="empty-state">No snapshots yet. Select a frame and capture one.</div>';
+      return;
+    }
+    snapshotList.innerHTML = snapshots.map(s => {
+      const date = new Date(s.timestamp).toLocaleString();
+      return `
+        <div class="snapshot-item">
+          <div class="snapshot-info">
+            <div class="snapshot-label">${esc(s.label)}</div>
+            <div class="snapshot-meta">${esc(s.rootNodeName)} · ${s.nodeCount} nodes · ${date}</div>
+          </div>
+          <button class="danger" onclick="deleteSnapshot('${s.id}')">Delete</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Render select dropdowns
+  function renderSelects() {
+    const options = snapshots.map(s =>
+      `<option value="${s.id}">${esc(s.label)} (${new Date(s.timestamp).toLocaleDateString()})</option>`
+    ).join('');
+
+    if (snapshots.length < 2) {
+      selectFrom.innerHTML = '<option value="">Need at least 2 snapshots</option>';
+      selectTo.innerHTML = '<option value="">Need at least 2 snapshots</option>';
+      btnCompare.disabled = true;
+    } else {
+      selectFrom.innerHTML = options;
+      selectTo.innerHTML = options;
+      // Default: first=from, last=to
+      selectFrom.selectedIndex = 0;
+      selectTo.selectedIndex = snapshots.length - 1;
+      btnCompare.disabled = false;
+    }
+  }
+
+  // Delete
+  window.deleteSnapshot = function(id) {
+    parent.postMessage({ pluginMessage: { type: 'delete-snapshot', id } }, '*');
+  };
+
+  // Compare
+  btnCompare.addEventListener('click', () => {
+    const fromId = selectFrom.value;
+    const toId = selectTo.value;
+    if (!fromId || !toId) return;
+    if (fromId === toId) {
+      showToast('Please select two different snapshots.', true);
+      return;
+    }
+    parent.postMessage({ pluginMessage: { type: 'compare-snapshots', fromId, toId } }, '*');
+  });
+
+  // Render changelog
+  function renderChangelog(changelog) {
+    currentChangelog = changelog;
+    changelogEmpty.style.display = 'none';
+    changelogContent.style.display = 'block';
+
+    const s = changelog.summary;
+    summaryBar.innerHTML = `
+      <div class="summary-stat stat-added"><span class="count">+${s.added}</span>added</div>
+      <div class="summary-stat stat-removed"><span class="count">-${s.removed}</span>removed</div>
+      <div class="summary-stat stat-modified"><span class="count">~${s.modified}</span>modified</div>
+    `;
+
+    let html = '';
+
+    const added = changelog.entries.filter(e => e.category === 'added');
+    const removed = changelog.entries.filter(e => e.category === 'removed');
+    const modified = changelog.entries.filter(e => e.category === 'modified');
+
+    if (added.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-added">Added</div>';
+      html += added.map(e => renderEntry(e)).join('');
+      html += '</div>';
+    }
+    if (removed.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-removed">Removed</div>';
+      html += removed.map(e => renderEntry(e)).join('');
+      html += '</div>';
+    }
+    if (modified.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-modified">Modified</div>';
+      html += modified.map(e => renderEntry(e)).join('');
+      html += '</div>';
+    }
+
+    if (!added.length && !removed.length && !modified.length) {
+      html = '<div class="empty-state">No changes detected between these snapshots.</div>';
+    }
+
+    changelogEntries.innerHTML = html;
+
+    // Switch to changelog tab
+    tabs.forEach(t => t.classList.remove('active'));
+    tabContents.forEach(tc => tc.classList.remove('active'));
+    document.querySelector('[data-tab="changelog"]').classList.add('active');
+    document.getElementById('tab-changelog').classList.add('active');
+  }
+
+  function renderEntry(entry) {
+    const badge = `<span class="badge badge-${entry.category}">${entry.category}</span>`;
+    let details = '';
+
+    if (entry.changes && entry.changes.length) {
+      details = '<div class="change-details">' + entry.changes.map(c =>
+        `<div class="prop-change">
+          <span class="badge-group">${c.group}</span>
+          <span class="prop-name">${esc(c.property)}</span>
+          <span class="prop-old prop-value" title="${esc(c.oldValue)}">${esc(truncate(c.oldValue))}</span>
+          →
+          <span class="prop-new prop-value" title="${esc(c.newValue)}">${esc(truncate(c.newValue))}</span>
+        </div>`
+      ).join('') + '</div>';
+    }
+
+    return `
+      <div class="change-entry ${entry.category}" onclick="highlightNode('${entry.nodeId}')">
+        <div class="change-header">
+          ${badge}
+          <span class="change-node-name">${esc(entry.nodeName)}</span>
+          <span class="change-node-type">${entry.nodeType}</span>
+        </div>
+        ${details}
+      </div>
+    `;
+  }
+
+  // Highlight node in Figma
+  window.highlightNode = function(nodeId) {
+    parent.postMessage({ pluginMessage: { type: 'highlight-node', nodeId } }, '*');
+  };
+
+  // Export as Markdown
+  btnExport.addEventListener('click', () => {
+    if (!currentChangelog) return;
+    parent.postMessage({ pluginMessage: { type: 'export-changelog', changelog: currentChangelog } }, '*');
+  });
+
+  // Helpers
+  function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
+  function truncate(str, max) {
+    max = max || 40;
+    if (!str) return '';
+    return str.length > max ? str.substring(0, max) + '...' : str;
+  }
+
+  // Messages from plugin
+  window.onmessage = (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+
+    switch (msg.type) {
+      case 'snapshot-list':
+        snapshots = msg.snapshots || [];
+        renderSnapshotList();
+        renderSelects();
+        break;
+
+      case 'snapshot-saved':
+        showToast(msg.message, false);
+        break;
+
+      case 'snapshot-deleted':
+        showToast(msg.message, false);
+        break;
+
+      case 'changelog-result':
+        renderChangelog(msg.changelog);
+        showToast('Changelog generated.', false);
+        break;
+
+      case 'export-markdown':
+        // Copy to clipboard
+        const textarea = document.createElement('textarea');
+        textarea.value = msg.markdown;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Markdown copied to clipboard!', false);
+        break;
+
+      case 'error':
+        showToast(msg.message, true);
+        break;
+    }
+  };
+
+  // Initial load
+  parent.postMessage({ pluginMessage: { type: 'list-snapshots' } }, '*');
+</script>
+</body>
+</html>
