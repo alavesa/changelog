@@ -1,4 +1,4 @@
-# Design Trail
+# Design Trail very first functioning version
 
 A Figma plugin that captures design snapshots and generates visual changelogs. Track how your designs evolve over time by comparing snapshots and seeing exactly what changed — added, removed, or modified nodes with detailed property diffs.
 
