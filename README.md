@@ -56,6 +56,26 @@ ui/
 manifest.json   # Figma plugin manifest
 ```
 
+## Roadmap
+
+### Near-term
+- [ ] Filter & search changelog by change group (style, layout, typography) or node name
+- [ ] Snapshot auto-versioning — auto-suggest `v1`, `v2`, etc.
+- [ ] Annotations — add notes to snapshots explaining *why* something changed
+- [ ] Snapshot timeline — view how a single node evolved across multiple snapshots
+
+### Mid-term
+- [ ] Visual side-by-side preview — capture thumbnail exports at snapshot time, show before/after images
+- [ ] Compare across different root nodes — match by node name/structure instead of ID
+- [ ] Export to JSON/CSV for external tools and design system docs
+- [ ] Auto-snapshot on page change or interval
+
+### Long-term
+- [ ] Component-level tracking — detect component swaps and detaches
+- [ ] Design token awareness — map raw fill/stroke values to variable/style names
+- [ ] Team changelog — aggregate changelogs across multiple pages/files
+- [ ] Slack/webhook integration — post changelogs to a channel automatically
+
 ## License
 
 MIT
