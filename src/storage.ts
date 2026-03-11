@@ -8,21 +8,33 @@ const SNAP_PREFIX = "changelog_snap_";
 const MAX_SNAPSHOTS = 20;
 
 function getData(key: string): any {
-  const raw = figma.root.getPluginData(key);
-  if (!raw) return null;
   try {
+    const raw = figma.root.getPluginData(key);
+    if (!raw) return null;
     return JSON.parse(raw);
   } catch (e) {
+    console.error("getData error for key", key, e);
     return null;
   }
 }
 
 function setData(key: string, value: any): void {
-  figma.root.setPluginData(key, JSON.stringify(value));
+  try {
+    const json = JSON.stringify(value);
+    console.log("setData:", key, "size:", json.length, "bytes");
+    figma.root.setPluginData(key, json);
+  } catch (e) {
+    console.error("setData error for key", key, e);
+    throw e;
+  }
 }
 
 function deleteData(key: string): void {
-  figma.root.setPluginData(key, "");
+  try {
+    figma.root.setPluginData(key, "");
+  } catch (e) {
+    console.error("deleteData error for key", key, e);
+  }
 }
 
 function getIndex(): SnapshotMeta[] {
@@ -34,29 +46,34 @@ function saveIndex(index: SnapshotMeta[]): void {
 }
 
 export function saveSnapshot(snapshot: Snapshot): { ok: boolean; message: string } {
-  const index = getIndex();
+  try {
+    const index = getIndex();
 
-  if (index.length >= MAX_SNAPSHOTS) {
-    return {
-      ok: false,
-      message: `Maximum of ${MAX_SNAPSHOTS} snapshots reached. Delete some before capturing more.`,
+    if (index.length >= MAX_SNAPSHOTS) {
+      return {
+        ok: false,
+        message: `Maximum of ${MAX_SNAPSHOTS} snapshots reached. Delete some before capturing more.`,
+      };
+    }
+
+    const meta: SnapshotMeta = {
+      id: snapshot.id,
+      label: snapshot.label,
+      annotation: snapshot.annotation,
+      timestamp: snapshot.timestamp,
+      rootNodeName: snapshot.rootNodeName,
+      nodeCount: snapshot.nodeCount,
     };
+
+    index.push(meta);
+    saveIndex(index);
+    setData(SNAP_PREFIX + snapshot.id, snapshot);
+
+    return { ok: true, message: `Snapshot "${snapshot.label}" saved (${snapshot.nodeCount} nodes).` };
+  } catch (e) {
+    console.error("saveSnapshot error:", e);
+    return { ok: false, message: `Failed to save snapshot: ${e}` };
   }
-
-  const meta: SnapshotMeta = {
-    id: snapshot.id,
-    label: snapshot.label,
-    annotation: snapshot.annotation,
-    timestamp: snapshot.timestamp,
-    rootNodeName: snapshot.rootNodeName,
-    nodeCount: snapshot.nodeCount,
-  };
-
-  index.push(meta);
-  saveIndex(index);
-  setData(SNAP_PREFIX + snapshot.id, snapshot);
-
-  return { ok: true, message: `Snapshot "${snapshot.label}" saved (${snapshot.nodeCount} nodes).` };
 }
 
 export function getSnapshots(): SnapshotMeta[] {
@@ -76,7 +93,11 @@ export function deleteSnapshot(id: string): void {
 
 // Review data — also stored in the file
 export function saveReview(key: string, data: any): void {
-  setData(key, data);
+  try {
+    setData(key, data);
+  } catch (e) {
+    console.error("saveReview error:", e);
+  }
 }
 
 export function loadReview(key: string): any {

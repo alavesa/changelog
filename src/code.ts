@@ -133,6 +133,17 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       figma.ui.postMessage({ type: "review-loaded", data });
       break;
     }
+
+    case "clear-all-data": {
+      // Remove all plugin data keys from the file
+      const keys = figma.root.getPluginDataKeys();
+      for (const key of keys) {
+        figma.root.setPluginData(key, "");
+      }
+      figma.ui.postMessage({ type: "snapshot-list", snapshots: [] });
+      figma.ui.postMessage({ type: "data-cleared", message: "All plugin data cleared. You can start fresh." });
+      break;
+    }
   }
 }
 
