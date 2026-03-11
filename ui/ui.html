@@ -523,6 +523,26 @@
     return str.length > max ? str.substring(0, max) + '...' : str;
   }
 
+  // Auto-versioning
+  function getNextVersionLabel(snaps) {
+    var max = 0;
+    for (var i = 0; i < snaps.length; i++) {
+      var match = snaps[i].label.match(/^v(\d+)/i);
+      if (match) {
+        var num = parseInt(match[1], 10);
+        if (num > max) max = num;
+      }
+    }
+    return 'v' + (max + 1);
+  }
+
+  function prefillLabel() {
+    var current = snapshotLabel.value.trim();
+    if (current === '' || /^v\d+$/.test(current)) {
+      snapshotLabel.value = getNextVersionLabel(snapshots);
+    }
+  }
+
   // Messages from plugin
   window.onmessage = (event) => {
     const msg = event.data.pluginMessage;
@@ -533,6 +553,7 @@
         snapshots = msg.snapshots || [];
         renderSnapshotList();
         renderSelects();
+        prefillLabel();
         break;
 
       case 'snapshot-saved':
