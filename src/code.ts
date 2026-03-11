@@ -19,6 +19,9 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       const node = selection[0];
       const label = msg.label || `Snapshot ${Date.now()}`;
       const snapshot = captureSnapshot(node, label);
+      if (msg.annotation) {
+        snapshot.annotation = msg.annotation;
+      }
       const result = await saveSnapshot(snapshot);
 
       if (result.ok) {

@@ -31,6 +31,7 @@ export interface NodeSnapshot {
 export interface Snapshot {
   id: string;
   label: string;
+  annotation?: string;
   timestamp: number;
   rootNodeId: string;
   rootNodeName: string;
@@ -41,6 +42,7 @@ export interface Snapshot {
 export interface SnapshotMeta {
   id: string;
   label: string;
+  annotation?: string;
   timestamp: number;
   rootNodeName: string;
   nodeCount: number;

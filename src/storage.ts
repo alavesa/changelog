@@ -26,6 +26,7 @@ export async function saveSnapshot(snapshot: Snapshot): Promise<{ ok: boolean; m
   const meta: SnapshotMeta = {
     id: snapshot.id,
     label: snapshot.label,
+    annotation: snapshot.annotation,
     timestamp: snapshot.timestamp,
     rootNodeName: snapshot.rootNodeName,
     nodeCount: snapshot.nodeCount,

@@ -65,6 +65,32 @@
 
   .field { margin-bottom: 12px; }
 
+  textarea {
+    width: 100%;
+    padding: 8px 10px;
+    background: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    min-height: 48px;
+  }
+  textarea:focus { border-color: #7B61FF; }
+  textarea::placeholder { color: #777; }
+
+  .snapshot-annotation {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 3px;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   button {
     padding: 8px 16px;
     background: #7B61FF;
@@ -233,6 +259,34 @@
     vertical-align: bottom;
   }
 
+  /* Filter bar */
+  .filter-bar {
+    margin-bottom: 12px;
+  }
+  .filter-bar input[type="text"] {
+    margin-bottom: 8px;
+  }
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .filter-chip {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #555;
+    background: transparent;
+    color: #999;
+    width: auto;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+  }
+  .filter-chip:hover { border-color: #888; color: #ccc; background: transparent; }
+  .filter-chip.active { border-color: #7B61FF; color: #7B61FF; background: rgba(123, 97, 255, 0.1); }
+  .filter-chip.active:hover { background: rgba(123, 97, 255, 0.15); }
+
   /* Toast */
   .toast {
     position: fixed;
@@ -279,6 +333,10 @@
     <label>Snapshot Label</label>
     <input type="text" id="snapshot-label" placeholder="e.g. v1 - Initial design">
   </div>
+  <div class="field">
+    <label>Why? (optional)</label>
+    <textarea id="snapshot-annotation" rows="2" placeholder="e.g. Adjusted spacing after design review"></textarea>
+  </div>
   <button id="btn-capture">Capture Snapshot</button>
   <div class="snapshot-list" id="snapshot-list"></div>
 </div>
@@ -303,6 +361,17 @@
   </div>
   <div id="changelog-content" style="display: none;">
     <div class="summary-bar" id="summary-bar"></div>
+    <div class="filter-bar">
+      <input type="text" id="changelog-search" placeholder="Search by node name...">
+      <div class="filter-chips">
+        <button class="filter-chip active" data-group="all">All</button>
+        <button class="filter-chip" data-group="structure">Structure</button>
+        <button class="filter-chip" data-group="layout">Layout</button>
+        <button class="filter-chip" data-group="style">Style</button>
+        <button class="filter-chip" data-group="typography">Typography</button>
+        <button class="filter-chip" data-group="naming">Naming</button>
+      </div>
+    </div>
     <div id="changelog-entries"></div>
     <button id="btn-export" class="secondary" style="margin-top: 12px;">Copy as Markdown</button>
   </div>
@@ -319,6 +388,7 @@
   const tabs = document.querySelectorAll('.tab');
   const tabContents = document.querySelectorAll('.tab-content');
   const snapshotLabel = document.getElementById('snapshot-label');
+  const snapshotAnnotation = document.getElementById('snapshot-annotation');
   const btnCapture = document.getElementById('btn-capture');
   const snapshotList = document.getElementById('snapshot-list');
   const selectFrom = document.getElementById('select-from');
@@ -330,6 +400,8 @@
   const changelogEntries = document.getElementById('changelog-entries');
   const btnExport = document.getElementById('btn-export');
   const toast = document.getElementById('toast');
+  const changelogSearch = document.getElementById('changelog-search');
+  const filterChips = document.querySelectorAll('.filter-chip');
 
   // Tab switching
   tabs.forEach(tab => {
@@ -361,8 +433,10 @@
       showToast('Please enter a label for the snapshot.', true);
       return;
     }
-    parent.postMessage({ pluginMessage: { type: 'capture-snapshot', label } }, '*');
+    const annotation = snapshotAnnotation.value.trim();
+    parent.postMessage({ pluginMessage: { type: 'capture-snapshot', label, annotation: annotation || undefined } }, '*');
     snapshotLabel.value = '';
+    snapshotAnnotation.value = '';
   });
 
   // Render snapshot list
@@ -373,11 +447,15 @@
     }
     snapshotList.innerHTML = snapshots.map(s => {
       const date = new Date(s.timestamp).toLocaleString();
+      const annotationHtml = s.annotation
+        ? '<div class="snapshot-annotation" title="' + esc(s.annotation) + '">' + esc(s.annotation) + '</div>'
+        : '';
       return `
         <div class="snapshot-item">
           <div class="snapshot-info">
             <div class="snapshot-label">${esc(s.label)}</div>
             <div class="snapshot-meta">${esc(s.rootNodeName)} · ${s.nodeCount} nodes · ${date}</div>
+            ${annotationHtml}
           </div>
           <button class="danger" onclick="deleteSnapshot('${s.id}')">Delete</button>
         </div>
@@ -428,6 +506,12 @@
     changelogEmpty.style.display = 'none';
     changelogContent.style.display = 'block';
 
+    // Reset filters
+    activeGroup = 'all';
+    changelogSearch.value = '';
+    filterChips.forEach(function(c) { c.classList.remove('active'); });
+    filterChips[0].classList.add('active');
+
     const s = changelog.summary;
     summaryBar.innerHTML = `
       <div class="summary-stat stat-added"><span class="count">+${s.added}</span>added</div>
@@ -468,6 +552,67 @@
     tabContents.forEach(tc => tc.classList.remove('active'));
     document.querySelector('[data-tab="changelog"]').classList.add('active');
     document.getElementById('tab-changelog').classList.add('active');
+  }
+
+  // Filter state
+  var activeGroup = 'all';
+
+  filterChips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      filterChips.forEach(function(c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeGroup = chip.dataset.group;
+      renderFilteredChangelog();
+    });
+  });
+
+  changelogSearch.addEventListener('input', function() {
+    renderFilteredChangelog();
+  });
+
+  function renderFilteredChangelog() {
+    if (!currentChangelog) return;
+
+    var searchTerm = changelogSearch.value.trim().toLowerCase();
+    var filtered = currentChangelog.entries.filter(function(entry) {
+      // Filter by node name search
+      if (searchTerm && entry.nodeName.toLowerCase().indexOf(searchTerm) === -1) {
+        return false;
+      }
+      // Filter by change group
+      if (activeGroup === 'all') return true;
+      // Added/removed entries have no change groups, show them only when "all"
+      if (entry.category === 'added' || entry.category === 'removed') return false;
+      // Modified entries: check if any change matches the selected group
+      return entry.changes.some(function(c) { return c.group === activeGroup; });
+    });
+
+    var added = filtered.filter(function(e) { return e.category === 'added'; });
+    var removed = filtered.filter(function(e) { return e.category === 'removed'; });
+    var modified = filtered.filter(function(e) { return e.category === 'modified'; });
+
+    var html = '';
+    if (added.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-added">Added</div>';
+      html += added.map(function(e) { return renderEntry(e); }).join('');
+      html += '</div>';
+    }
+    if (removed.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-removed">Removed</div>';
+      html += removed.map(function(e) { return renderEntry(e); }).join('');
+      html += '</div>';
+    }
+    if (modified.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-modified">Modified</div>';
+      html += modified.map(function(e) { return renderEntry(e); }).join('');
+      html += '</div>';
+    }
+
+    if (!html) {
+      html = '<div class="empty-state">No changes match your filters.</div>';
+    }
+
+    changelogEntries.innerHTML = html;
   }
 
   function renderEntry(entry) {
