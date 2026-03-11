@@ -9,6 +9,7 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 - **Visual diff** showing added, removed, and modified nodes with property-level detail
 - **Click to highlight** — jump to any changed node in your Figma file
 - **Export as Markdown** for sharing changelogs with your team
+- **Auto-versioning** — snapshot labels auto-suggest `v1`, `v2`, `v3`, etc.
 - Tracks layout, style, typography, structure, and naming changes
 
 ## Development
@@ -60,7 +61,7 @@ manifest.json   # Figma plugin manifest
 
 ### Near-term
 - [ ] Filter & search changelog by change group (style, layout, typography) or node name
-- [ ] Snapshot auto-versioning — auto-suggest `v1`, `v2`, etc.
+- [x] Snapshot auto-versioning — auto-suggest `v1`, `v2`, etc.
 - [ ] Annotations — add notes to snapshots explaining *why* something changed
 - [ ] Snapshot timeline — view how a single node evolved across multiple snapshots
 
