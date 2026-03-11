@@ -18,14 +18,25 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
 
       const node = selection[0];
       const label = msg.label || `Snapshot ${Date.now()}`;
-      const snapshot = captureSnapshot(node, label);
+      const capture = captureSnapshot(node, label);
+
+      if (capture.error) {
+        figma.ui.postMessage({ type: "error", message: capture.error });
+        return;
+      }
+
+      const snapshot = capture.snapshot!;
       if (msg.annotation) {
         snapshot.annotation = msg.annotation;
       }
       const result = saveSnapshot(snapshot);
 
       if (result.ok) {
-        figma.ui.postMessage({ type: "snapshot-saved", message: result.message });
+        let message = result.message;
+        if (capture.warning) {
+          message += " ⚠ " + capture.warning;
+        }
+        figma.ui.postMessage({ type: "snapshot-saved", message });
         const list = getSnapshots();
         figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
       } else {

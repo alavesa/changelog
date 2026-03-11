@@ -63,6 +63,7 @@ function round2(n: number): number {
 function serializeNode(node: SceneNode): NodeSnapshot {
   const n = node as any;
 
+  // Start with required fields only
   const snap: NodeSnapshot = {
     id: node.id,
     name: node.name,
@@ -89,20 +90,32 @@ function serializeNode(node: SceneNode): NodeSnapshot {
     cornerSmoothing: "cornerSmoothing" in n ? n.cornerSmoothing : 0,
   };
 
-  // Individual corner radii
+  // Individual corner radii — only if non-zero
   if ("topLeftRadius" in n) {
-    snap.topLeftRadius = round2(n.topLeftRadius);
-    snap.topRightRadius = round2(n.topRightRadius);
-    snap.bottomLeftRadius = round2(n.bottomLeftRadius);
-    snap.bottomRightRadius = round2(n.bottomRightRadius);
+    const tl = round2(n.topLeftRadius);
+    const tr = round2(n.topRightRadius);
+    const bl = round2(n.bottomLeftRadius);
+    const br = round2(n.bottomRightRadius);
+    if (tl || tr || bl || br) {
+      snap.topLeftRadius = tl;
+      snap.topRightRadius = tr;
+      snap.bottomLeftRadius = bl;
+      snap.bottomRightRadius = br;
+    }
   }
 
-  // Individual stroke weights
+  // Individual stroke weights — only if non-zero
   if ("strokeTopWeight" in n) {
-    snap.strokeTopWeight = round2(n.strokeTopWeight);
-    snap.strokeBottomWeight = round2(n.strokeBottomWeight);
-    snap.strokeLeftWeight = round2(n.strokeLeftWeight);
-    snap.strokeRightWeight = round2(n.strokeRightWeight);
+    const st = round2(n.strokeTopWeight);
+    const sb = round2(n.strokeBottomWeight);
+    const sl = round2(n.strokeLeftWeight);
+    const sr = round2(n.strokeRightWeight);
+    if (st || sb || sl || sr) {
+      snap.strokeTopWeight = st;
+      snap.strokeBottomWeight = sb;
+      snap.strokeLeftWeight = sl;
+      snap.strokeRightWeight = sr;
+    }
   }
 
   // Constraints
@@ -118,7 +131,9 @@ function serializeNode(node: SceneNode): NodeSnapshot {
   // Text-specific properties
   if (node.type === "TEXT") {
     const t = node as TextNode;
-    snap.characters = t.characters;
+    // Truncate very long text content to save space
+    const chars = t.characters;
+    snap.characters = chars.length > 500 ? chars.substring(0, 500) + "…" : chars;
     snap.fontSize = t.fontSize === figma.mixed ? "mixed" : t.fontSize;
 
     const fontName = t.fontName;
@@ -180,12 +195,18 @@ function serializeNode(node: SceneNode): NodeSnapshot {
     snap.layoutPositioning = n.layoutPositioning;
   }
 
-  // Min/max dimensions
+  // Min/max dimensions — only if set (not "none")
   if ("minWidth" in n) {
-    snap.minWidth = n.minWidth === null ? "none" : n.minWidth;
-    snap.maxWidth = n.maxWidth === null ? "none" : n.maxWidth;
-    snap.minHeight = n.minHeight === null ? "none" : n.minHeight;
-    snap.maxHeight = n.maxHeight === null ? "none" : n.maxHeight;
+    const minW = n.minWidth === null ? "none" : n.minWidth;
+    const maxW = n.maxWidth === null ? "none" : n.maxWidth;
+    const minH = n.minHeight === null ? "none" : n.minHeight;
+    const maxH = n.maxHeight === null ? "none" : n.maxHeight;
+    if (minW !== "none" || maxW !== "none" || minH !== "none" || maxH !== "none") {
+      snap.minWidth = minW;
+      snap.maxWidth = maxW;
+      snap.minHeight = minH;
+      snap.maxHeight = maxH;
+    }
   }
 
   // Children IDs
@@ -198,24 +219,56 @@ function serializeNode(node: SceneNode): NodeSnapshot {
   return snap;
 }
 
+const MAX_NODES = 5000;
+
+function countDescendants(node: SceneNode): number {
+  let count = 1;
+  if ("children" in node) {
+    for (const child of (node as ChildrenMixin & SceneNode).children) {
+      count += countDescendants(child as SceneNode);
+    }
+  }
+  return count;
+}
+
 function walkTree(
   node: SceneNode,
-  nodes: Record<string, NodeSnapshot>
+  nodes: Record<string, NodeSnapshot>,
+  limit: number
 ): void {
+  if (Object.keys(nodes).length >= limit) return;
   nodes[node.id] = serializeNode(node);
 
   if ("children" in node) {
     for (const child of (node as ChildrenMixin & SceneNode).children) {
-      walkTree(child as SceneNode, nodes);
+      if (Object.keys(nodes).length >= limit) return;
+      walkTree(child as SceneNode, nodes, limit);
     }
   }
 }
 
-export function captureSnapshot(node: SceneNode, label: string): Snapshot {
-  const nodes: Record<string, NodeSnapshot> = {};
-  walkTree(node, nodes);
+export interface CaptureResult {
+  snapshot: Snapshot | null;
+  warning: string | null;
+  error: string | null;
+}
 
-  return {
+export function captureSnapshot(node: SceneNode, label: string): CaptureResult {
+  // Pre-check node count
+  const totalNodes = countDescendants(node);
+
+  if (totalNodes > MAX_NODES) {
+    return {
+      snapshot: null,
+      warning: null,
+      error: `This selection has ${totalNodes.toLocaleString()} nodes — too large to capture. Maximum is ${MAX_NODES.toLocaleString()} nodes. Try selecting a smaller frame or component.`,
+    };
+  }
+
+  const nodes: Record<string, NodeSnapshot> = {};
+  walkTree(node, nodes, MAX_NODES);
+
+  const snapshot: Snapshot = {
     id: generateId(),
     label,
     timestamp: Date.now(),
@@ -224,4 +277,13 @@ export function captureSnapshot(node: SceneNode, label: string): Snapshot {
     nodeCount: Object.keys(nodes).length,
     nodes,
   };
+
+  // Estimate size before saving
+  const estimatedSize = JSON.stringify(snapshot).length;
+  const sizeMB = (estimatedSize / (1024 * 1024)).toFixed(1);
+  const warning = estimatedSize > 500000
+    ? `Large snapshot (${sizeMB} MB, ${snapshot.nodeCount} nodes). If save fails, try a smaller selection.`
+    : null;
+
+  return { snapshot, warning, error: null };
 }

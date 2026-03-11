@@ -72,6 +72,13 @@ export function saveSnapshot(snapshot: Snapshot): { ok: boolean; message: string
     return { ok: true, message: `Snapshot "${snapshot.label}" saved (${snapshot.nodeCount} nodes).` };
   } catch (e) {
     console.error("saveSnapshot error:", e);
+    const errMsg = String(e);
+    if (errMsg.includes("size") || errMsg.includes("quota") || errMsg.includes("large") || errMsg.includes("exceed")) {
+      return {
+        ok: false,
+        message: `Snapshot too large to save (${snapshot.nodeCount} nodes). Try selecting a smaller frame or component.`,
+      };
+    }
     return { ok: false, message: `Failed to save snapshot: ${e}` };
   }
 }
