@@ -122,6 +122,17 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       figma.ui.postMessage({ type: "export-markdown", markdown });
       break;
     }
+
+    case "save-review": {
+      await figma.clientStorage.setAsync(msg.key, msg.data);
+      break;
+    }
+
+    case "load-review": {
+      const data = await figma.clientStorage.getAsync(msg.key);
+      figma.ui.postMessage({ type: "review-loaded", data: data || {} });
+      break;
+    }
   }
 }
 
