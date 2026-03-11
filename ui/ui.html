@@ -259,6 +259,105 @@
     vertical-align: bottom;
   }
 
+  /* Timeline panel */
+  .timeline-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #2c2c2c;
+    z-index: 50;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .timeline-overlay.visible { display: block; }
+
+  .timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .timeline-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e0e0e0;
+  }
+  .timeline-subtitle {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+  }
+  .btn-back {
+    padding: 4px 10px;
+    background: #444;
+    color: #ddd;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    width: auto;
+  }
+  .btn-back:hover { background: #555; }
+
+  .timeline-step {
+    position: relative;
+    padding: 10px 12px 10px 24px;
+    margin-bottom: 2px;
+    background: #363636;
+    border-radius: 4px;
+  }
+  .timeline-step::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #555;
+  }
+  .timeline-step:first-child::before { top: 50%; }
+  .timeline-step:last-child::before { bottom: 50%; }
+  .timeline-step:only-child::before { display: none; }
+  .timeline-step::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #7B61FF;
+    border: 2px solid #2c2c2c;
+    z-index: 1;
+  }
+  .timeline-step-label {
+    font-weight: 600;
+    font-size: 12px;
+    color: #e0e0e0;
+  }
+  .timeline-step-date {
+    font-size: 10px;
+    color: #888;
+    margin-top: 2px;
+  }
+  .timeline-step-changes {
+    margin-top: 6px;
+  }
+  .timeline-prop {
+    font-size: 11px;
+    color: #bbb;
+    margin-bottom: 2px;
+  }
+  .timeline-prop .prop-name { color: #aaa; font-weight: 500; }
+  .timeline-prop .prop-new { color: #4CAF50; }
+  .timeline-prop .prop-old { color: #F44336; text-decoration: line-through; }
+  .timeline-no-change {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+  }
+
   /* Filter bar */
   .filter-bar {
     margin-bottom: 12px;
@@ -375,6 +474,17 @@
     <div id="changelog-entries"></div>
     <button id="btn-export" class="secondary" style="margin-top: 12px;">Copy as Markdown</button>
   </div>
+</div>
+
+<div class="timeline-overlay" id="timeline-overlay">
+  <div class="timeline-header">
+    <div>
+      <div class="timeline-title" id="timeline-title"></div>
+      <div class="timeline-subtitle" id="timeline-subtitle"></div>
+    </div>
+    <button class="btn-back" id="btn-timeline-back">Back</button>
+  </div>
+  <div id="timeline-entries"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -632,13 +742,14 @@
     }
 
     return `
-      <div class="change-entry ${entry.category}" onclick="highlightNode('${entry.nodeId}')">
-        <div class="change-header">
+      <div class="change-entry ${entry.category}">
+        <div class="change-header" onclick="highlightNode('${entry.nodeId}')">
           ${badge}
           <span class="change-node-name">${esc(entry.nodeName)}</span>
           <span class="change-node-type">${entry.nodeType}</span>
         </div>
         ${details}
+        <button class="secondary" style="margin-top:6px;padding:3px 8px;font-size:10px;width:auto;" onclick="event.stopPropagation();showNodeTimeline('${entry.nodeId}','${esc(entry.nodeName).replace(/'/g, "\\'")}')">View Timeline</button>
       </div>
     `;
   }
@@ -647,6 +758,79 @@
   window.highlightNode = function(nodeId) {
     parent.postMessage({ pluginMessage: { type: 'highlight-node', nodeId } }, '*');
   };
+
+  // Timeline
+  var timelineOverlay = document.getElementById('timeline-overlay');
+  var timelineTitle = document.getElementById('timeline-title');
+  var timelineSubtitle = document.getElementById('timeline-subtitle');
+  var timelineEntries = document.getElementById('timeline-entries');
+  var btnTimelineBack = document.getElementById('btn-timeline-back');
+
+  window.showNodeTimeline = function(nodeId, nodeName) {
+    timelineTitle.textContent = nodeName;
+    timelineSubtitle.textContent = 'Loading timeline...';
+    timelineEntries.innerHTML = '';
+    timelineOverlay.classList.add('visible');
+    parent.postMessage({ pluginMessage: { type: 'node-timeline', nodeId: nodeId, nodeName: nodeName } }, '*');
+  };
+
+  btnTimelineBack.addEventListener('click', function() {
+    timelineOverlay.classList.remove('visible');
+  });
+
+  var TRACKED_PROPS = ['x', 'y', 'width', 'height', 'visible', 'opacity', 'fills', 'strokes', 'effects', 'cornerRadius', 'characters', 'fontSize', 'fontName', 'fontWeight', 'layoutMode', 'itemSpacing', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'name'];
+
+  function renderTimeline(data) {
+    timelineTitle.textContent = data.nodeName;
+    var count = data.timeline.length;
+    timelineSubtitle.textContent = 'Found in ' + count + ' snapshot' + (count !== 1 ? 's' : '');
+
+    if (count === 0) {
+      timelineEntries.innerHTML = '<div class="empty-state">This node was not found in any snapshots.</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < data.timeline.length; i++) {
+      var step = data.timeline[i];
+      var prev = i > 0 ? data.timeline[i - 1] : null;
+      var date = new Date(step.timestamp).toLocaleString();
+
+      var changesHtml = '';
+      if (prev) {
+        var changes = [];
+        for (var p = 0; p < TRACKED_PROPS.length; p++) {
+          var prop = TRACKED_PROPS[p];
+          var oldVal = String(prev.node[prop] !== undefined ? prev.node[prop] : '');
+          var newVal = String(step.node[prop] !== undefined ? step.node[prop] : '');
+          if (oldVal !== newVal) {
+            changes.push(
+              '<div class="timeline-prop">' +
+                '<span class="prop-name">' + esc(prop) + '</span> ' +
+                '<span class="prop-old">' + esc(truncate(oldVal, 30)) + '</span> → ' +
+                '<span class="prop-new">' + esc(truncate(newVal, 30)) + '</span>' +
+              '</div>'
+            );
+          }
+        }
+        if (changes.length > 0) {
+          changesHtml = '<div class="timeline-step-changes">' + changes.join('') + '</div>';
+        } else {
+          changesHtml = '<div class="timeline-no-change">No changes from previous snapshot</div>';
+        }
+      } else {
+        changesHtml = '<div class="timeline-no-change">First appearance</div>';
+      }
+
+      html += '<div class="timeline-step">' +
+        '<div class="timeline-step-label">' + esc(step.snapshotLabel) + '</div>' +
+        '<div class="timeline-step-date">' + date + '</div>' +
+        changesHtml +
+      '</div>';
+    }
+
+    timelineEntries.innerHTML = html;
+  }
 
   // Export as Markdown
   btnExport.addEventListener('click', () => {
@@ -712,6 +896,10 @@
       case 'changelog-result':
         renderChangelog(msg.changelog);
         showToast('Changelog generated.', false);
+        break;
+
+      case 'node-timeline':
+        renderTimeline(msg);
         break;
 
       case 'export-markdown':

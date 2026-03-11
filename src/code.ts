@@ -85,6 +85,38 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       break;
     }
 
+    case "node-timeline": {
+      const index = await getSnapshots();
+      const timeline: Array<{
+        snapshotId: string;
+        snapshotLabel: string;
+        timestamp: number;
+        node: any;
+      }> = [];
+
+      for (const meta of index) {
+        const snap = await getSnapshot(meta.id);
+        if (snap && snap.nodes[msg.nodeId]) {
+          timeline.push({
+            snapshotId: meta.id,
+            snapshotLabel: meta.label,
+            timestamp: meta.timestamp,
+            node: snap.nodes[msg.nodeId],
+          });
+        }
+      }
+
+      timeline.sort((a, b) => a.timestamp - b.timestamp);
+
+      figma.ui.postMessage({
+        type: "node-timeline",
+        nodeId: msg.nodeId,
+        nodeName: msg.nodeName,
+        timeline,
+      });
+      break;
+    }
+
     case "export-changelog": {
       const markdown = changelogToMarkdown(msg.changelog);
       figma.ui.postMessage({ type: "export-markdown", markdown });

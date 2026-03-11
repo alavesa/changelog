@@ -65,7 +65,7 @@ manifest.json   # Figma plugin manifest
 - [x] Filter & search changelog by change group (style, layout, typography) or node name
 - [x] Snapshot auto-versioning — auto-suggest `v1`, `v2`, etc.
 - [x] Annotations — add notes to snapshots explaining *why* something changed
-- [ ] Snapshot timeline — view how a single node evolved across multiple snapshots
+- [x] Snapshot timeline — view how a single node evolved across multiple snapshots
 
 ### Mid-term
 - [ ] Visual side-by-side preview — capture thumbnail exports at snapshot time, show before/after images
