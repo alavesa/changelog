@@ -148,3 +148,27 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
 }
 
 figma.ui.onmessage = handleMessage;
+
+// Send selection info to UI whenever it changes
+function sendSelectionInfo() {
+  const selection = figma.currentPage.selection;
+  if (selection.length > 0) {
+    const node = selection[0];
+    figma.ui.postMessage({
+      type: "selection-changed",
+      hasSelection: true,
+      nodeName: node.name,
+      nodeType: node.type,
+    });
+  } else {
+    figma.ui.postMessage({
+      type: "selection-changed",
+      hasSelection: false,
+    });
+  }
+}
+
+figma.on("selectionchange", sendSelectionInfo);
+
+// Send initial selection state
+sendSelectionInfo();

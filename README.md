@@ -4,17 +4,30 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 
 ## Features
 
+### Intuitive workflow
+- **Guided 3-step flow** — Capture → Compare → Review, with a visual progress indicator
+- **Live selection indicator** — see what's selected in Figma before you capture (green dot = ready)
+- **Quick compare** — one-click comparison of your two most recent snapshots
+- **Auto-versioning** — snapshot labels auto-suggest `v1`, `v2`, `v3`, etc.
+- **Relative timestamps** — "2m ago", "1h ago" instead of full dates for easier scanning
+
+### Capture & compare
 - **Capture snapshots** of any selected frame or node
 - **Compare snapshots** to generate a structured changelog
 - **Visual diff** showing added, removed, and modified nodes with property-level detail
-- **Click to highlight** — jump to any changed node in your Figma file
-- **Export as Markdown** for sharing changelogs with your team
-- **Auto-versioning** — snapshot labels auto-suggest `v1`, `v2`, `v3`, etc.
 - **Annotations** — add notes to snapshots explaining *why* something changed
-- **Filter & search** — filter changelog by change group or search by node name
+- **Comparison header** — always see which snapshots you're comparing (e.g. "v1 → v2")
+
+### Changelog & review
+- **Smart summaries** — plain-English descriptions: "Moved right by 10px. Font changed to Inter Bold."
+- **Collapsible details** — summary first, expand for property-level diffs
+- **Filter & search** — filter by change group (style, layout, typography) or search by node name
+- **Click to highlight** — jump to any changed node in your Figma file
 - **Snapshot timeline** — view how a single node evolved across multiple snapshots
-- **Smart summaries** — plain-English descriptions of changes: "Moved right by 10px. Font changed to Inter Bold."
 - **Design review mode** — approve, flag, or comment on each change. Export a structured review report.
+- **Export as Markdown** for sharing changelogs with your team
+
+### Collaboration
 - **Shared with team** — all snapshots, changelogs, and reviews are saved to the Figma file, visible to everyone
 - **Deep property tracking** — 55+ properties across layout, style, typography, structure, and naming
 

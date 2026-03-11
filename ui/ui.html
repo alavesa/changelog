@@ -428,6 +428,134 @@
     padding: 24px 16px;
     font-size: 12px;
   }
+  .empty-state .empty-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+  .empty-state .empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #bbb;
+    margin-bottom: 4px;
+  }
+  .empty-state .empty-hint {
+    color: #777;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .empty-state .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #7B61FF;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* Selection indicator */
+  .selection-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    margin-bottom: 12px;
+    background: #1e1e1e;
+    border-radius: 4px;
+    border: 1px solid #444;
+    font-size: 11px;
+    color: #888;
+  }
+  .selection-bar .sel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #555;
+    flex-shrink: 0;
+  }
+  .selection-bar.has-selection .sel-dot { background: #4CAF50; }
+  .selection-bar.has-selection { color: #ccc; border-color: #555; }
+
+  /* Quick compare */
+  .quick-compare {
+    padding: 12px;
+    background: #363636;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .quick-compare .qc-label {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .quick-compare .qc-desc {
+    font-size: 12px;
+    color: #ccc;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  /* Comparison header */
+  .comparison-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    font-size: 12px;
+    color: #ccc;
+  }
+  .comparison-header .comp-snap {
+    padding: 4px 8px;
+    background: #363636;
+    border-radius: 4px;
+    font-weight: 600;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .comparison-header .comp-arrow { color: #7B61FF; font-weight: 700; }
+
+  /* Workflow steps (horizontal) */
+  .workflow-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 16px 0;
+    font-size: 10px;
+    color: #666;
+  }
+  .workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .workflow-step.active { color: #7B61FF; }
+  .workflow-step.done { color: #4CAF50; }
+  .workflow-step .ws-num {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+  }
+  .workflow-step.done .ws-num { background: #4CAF50; border-color: #4CAF50; color: #fff; }
+  .workflow-step.active .ws-num { background: #7B61FF; border-color: #7B61FF; color: #fff; }
+  .workflow-divider { color: #555; font-size: 10px; }
 
   /* Smart summary */
   .change-nlp {
@@ -506,8 +634,20 @@
   <div class="tab" data-tab="changelog">Changelog</div>
 </div>
 
+<div class="workflow-steps" id="workflow-steps">
+  <div class="workflow-step active" id="ws-capture"><span class="ws-num">1</span> Capture</div>
+  <span class="workflow-divider">&rsaquo;</span>
+  <div class="workflow-step" id="ws-compare"><span class="ws-num">2</span> Compare</div>
+  <span class="workflow-divider">&rsaquo;</span>
+  <div class="workflow-step" id="ws-review"><span class="ws-num">3</span> Review</div>
+</div>
+
 <!-- Capture Tab -->
 <div id="tab-capture" class="tab-content active">
+  <div class="selection-bar" id="selection-bar">
+    <span class="sel-dot"></span>
+    <span id="sel-text">Select a frame in Figma to capture</span>
+  </div>
   <div class="field">
     <label>Snapshot Label</label>
     <input type="text" id="snapshot-label" placeholder="e.g. v1 - Initial design">
@@ -523,6 +663,12 @@
 
 <!-- Compare Tab -->
 <div id="tab-compare" class="tab-content">
+  <div class="quick-compare" id="quick-compare" style="display:none;">
+    <div class="qc-label">Quick compare</div>
+    <div class="qc-desc" id="qc-desc"></div>
+    <button id="btn-quick-compare">Compare Latest Changes</button>
+  </div>
+  <div style="font-size:10px;text-align:center;color:#666;margin-bottom:8px;" id="or-divider" style="display:none;">or pick specific snapshots</div>
   <div class="field">
     <label>From (older)</label>
     <select id="select-from"><option value="">Loading...</option></select>
@@ -537,9 +683,15 @@
 <!-- Changelog Tab -->
 <div id="tab-changelog" class="tab-content">
   <div id="changelog-empty" class="empty-state">
-    Compare two snapshots to see changes here.
+    <div class="empty-icon">&#128203;</div>
+    <div class="empty-title">No changelog yet</div>
+    <div class="empty-hint">
+      <span class="step-number">1</span> Capture snapshots of your design<br>
+      <span class="step-number">2</span> Compare two snapshots to see what changed
+    </div>
   </div>
   <div id="changelog-content" style="display: none;">
+    <div class="comparison-header" id="comparison-header"></div>
     <div class="summary-bar" id="summary-bar"></div>
     <div class="review-bar" id="review-bar" style="display:none;">
       <div class="review-stat approved"><span id="review-approved-count">0</span> approved</div>
@@ -640,35 +792,80 @@
     snapshotAnnotation.value = '';
   });
 
+  // Relative time helper
+  function timeAgo(ts) {
+    var diff = Date.now() - ts;
+    var secs = Math.floor(diff / 1000);
+    if (secs < 60) return 'just now';
+    var mins = Math.floor(secs / 60);
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    var days = Math.floor(hrs / 24);
+    if (days < 7) return days + 'd ago';
+    return new Date(ts).toLocaleDateString();
+  }
+
+  // Update workflow step indicators
+  function updateWorkflow() {
+    var wsCap = document.getElementById('ws-capture');
+    var wsCmp = document.getElementById('ws-compare');
+    var wsRev = document.getElementById('ws-review');
+    wsCap.className = 'workflow-step' + (snapshots.length > 0 ? ' done' : ' active');
+    wsCmp.className = 'workflow-step' + (currentChangelog ? ' done' : (snapshots.length >= 2 ? ' active' : ''));
+    wsRev.className = 'workflow-step' + (currentChangelog ? ' active' : '');
+  }
+
+  // Update quick compare section
+  function updateQuickCompare() {
+    var qc = document.getElementById('quick-compare');
+    var orDiv = document.getElementById('or-divider');
+    if (snapshots.length >= 2) {
+      var prev = snapshots[snapshots.length - 2];
+      var latest = snapshots[snapshots.length - 1];
+      document.getElementById('qc-desc').textContent = prev.label + '  \u2192  ' + latest.label;
+      qc.style.display = 'block';
+      orDiv.style.display = 'block';
+    } else {
+      qc.style.display = 'none';
+      orDiv.style.display = 'none';
+    }
+  }
+
   // Render snapshot list
   function renderSnapshotList() {
+    updateWorkflow();
+    updateQuickCompare();
+
     if (snapshots.length === 0) {
-      snapshotList.innerHTML = '<div class="empty-state">No snapshots yet. Select a frame and capture one.</div>';
+      snapshotList.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">&#128247;</div>' +
+        '<div class="empty-title">No snapshots yet</div>' +
+        '<div class="empty-hint">Select a frame in Figma and click Capture Snapshot.<br>You\'ll need at least 2 to compare.</div>' +
+        '</div>';
       return;
     }
-    snapshotList.innerHTML = snapshots.map(s => {
-      const date = new Date(s.timestamp).toLocaleString();
-      const annotationHtml = s.annotation
+    snapshotList.innerHTML = snapshots.map(function(s) {
+      var relTime = timeAgo(s.timestamp);
+      var annotationHtml = s.annotation
         ? '<div class="snapshot-annotation" title="' + esc(s.annotation) + '">' + esc(s.annotation) + '</div>'
         : '';
-      return `
-        <div class="snapshot-item">
-          <div class="snapshot-info">
-            <div class="snapshot-label">${esc(s.label)}</div>
-            <div class="snapshot-meta">${esc(s.rootNodeName)} · ${s.nodeCount} nodes · ${date}</div>
-            ${annotationHtml}
-          </div>
-          <button class="danger" onclick="deleteSnapshot('${s.id}')">Delete</button>
-        </div>
-      `;
+      return '<div class="snapshot-item">' +
+          '<div class="snapshot-info">' +
+            '<div class="snapshot-label">' + esc(s.label) + '</div>' +
+            '<div class="snapshot-meta">' + esc(s.rootNodeName) + ' \u00b7 ' + s.nodeCount + ' nodes \u00b7 ' + relTime + '</div>' +
+            annotationHtml +
+          '</div>' +
+          '<button class="danger" onclick="deleteSnapshot(\'' + s.id + '\')">Delete</button>' +
+        '</div>';
     }).join('');
   }
 
   // Render select dropdowns
   function renderSelects() {
-    const options = snapshots.map(s =>
-      `<option value="${s.id}">${esc(s.label)} (${new Date(s.timestamp).toLocaleDateString()})</option>`
-    ).join('');
+    var options = snapshots.map(function(s) {
+      return '<option value="' + s.id + '">' + esc(s.label) + ' (' + timeAgo(s.timestamp) + ')</option>';
+    }).join('');
 
     if (snapshots.length < 2) {
       selectFrom.innerHTML = '<option value="">Need at least 2 snapshots</option>';
@@ -677,8 +874,8 @@
     } else {
       selectFrom.innerHTML = options;
       selectTo.innerHTML = options;
-      // Default: first=from, last=to
-      selectFrom.selectedIndex = 0;
+      // Default: second-to-last=from, last=to
+      selectFrom.selectedIndex = snapshots.length - 2;
       selectTo.selectedIndex = snapshots.length - 1;
       btnCompare.disabled = false;
     }
@@ -688,6 +885,14 @@
   window.deleteSnapshot = function(id) {
     parent.postMessage({ pluginMessage: { type: 'delete-snapshot', id } }, '*');
   };
+
+  // Quick compare
+  document.getElementById('btn-quick-compare').addEventListener('click', function() {
+    if (snapshots.length < 2) return;
+    var fromId = snapshots[snapshots.length - 2].id;
+    var toId = snapshots[snapshots.length - 1].id;
+    parent.postMessage({ pluginMessage: { type: 'compare-snapshots', fromId: fromId, toId: toId } }, '*');
+  });
 
   // Compare
   btnCompare.addEventListener('click', () => {
@@ -717,11 +922,19 @@
     filterChips.forEach(function(c) { c.classList.remove('active'); });
     filterChips[0].classList.add('active');
 
+    // Comparison header
+    document.getElementById('comparison-header').innerHTML =
+      '<span class="comp-snap">' + esc(changelog.fromSnapshot.label) + '</span>' +
+      '<span class="comp-arrow">\u2192</span>' +
+      '<span class="comp-snap">' + esc(changelog.toSnapshot.label) + '</span>';
+
     var s = changelog.summary;
     summaryBar.innerHTML =
       '<div class="summary-stat stat-added"><span class="count">+' + s.added + '</span>added</div>' +
       '<div class="summary-stat stat-removed"><span class="count">-' + s.removed + '</span>removed</div>' +
       '<div class="summary-stat stat-modified"><span class="count">~' + s.modified + '</span>modified</div>';
+
+    updateWorkflow();
 
     renderFilteredChangelog();
     updateReviewBar();
@@ -1033,11 +1246,13 @@
       : '';
     var escapedNodeId = entry.nodeId.replace(/'/g, "\\'");
     var escapedName = esc(entry.nodeName).replace(/'/g, "\\'");
+    var timelineBtn = '<button class="review-btn" style="margin-left:auto;" onclick="event.stopPropagation();showNodeTimeline(\'' + escapedNodeId + '\',\'' + escapedName + '\')">Timeline</button>';
     var reviewHtml = '<div class="review-actions">' +
-      '<button class="review-btn' + approveClass + '" onclick="event.stopPropagation();setReview(\'' + escapedNodeId + '\',\'approved\')" title="Approve">&#10003; Approve</button>' +
-      '<button class="review-btn' + flagClass + '" onclick="event.stopPropagation();setReview(\'' + escapedNodeId + '\',\'flagged\')" title="Flag">&#9873; Flag</button>' +
+      '<button class="review-btn' + approveClass + '" onclick="event.stopPropagation();setReview(\'' + escapedNodeId + '\',\'approved\')" title="Approve">&#10003;</button>' +
+      '<button class="review-btn' + flagClass + '" onclick="event.stopPropagation();setReview(\'' + escapedNodeId + '\',\'flagged\')" title="Flag">&#9873;</button>' +
       '<input class="review-comment-input" placeholder="Comment..." value="' + esc(review.comment) + '" ' +
         'onchange="setReviewComment(\'' + escapedNodeId + '\',this.value)" onclick="event.stopPropagation()">' +
+      timelineBtn +
       '</div>' + commentHtml;
 
     return '<div class="change-entry ' + entry.category + '" id="review-entry-' + entry.nodeId.replace(/[^a-zA-Z0-9]/g, '_') + '">' +
@@ -1047,7 +1262,6 @@
         '<span class="change-node-type">' + entry.nodeType + '</span>' +
       '</div>' +
       nlpHtml + summaryLine + details + reviewHtml +
-      '<button class="secondary" style="margin-top:6px;padding:3px 8px;font-size:10px;width:auto;" onclick="event.stopPropagation();showNodeTimeline(\'' + escapedNodeId + '\',\'' + escapedName + '\')">View Timeline</button>' +
       '</div>';
   }
 
@@ -1360,6 +1574,19 @@
         renderSelects();
         prefillLabel();
         break;
+
+      case 'selection-changed': {
+        var bar = document.getElementById('selection-bar');
+        var text = document.getElementById('sel-text');
+        if (msg.hasSelection) {
+          bar.classList.add('has-selection');
+          text.textContent = msg.nodeName + ' (' + msg.nodeType + ')';
+        } else {
+          bar.classList.remove('has-selection');
+          text.textContent = 'Select a frame in Figma to capture';
+        }
+        break;
+      }
 
       case 'error':
         showToast(msg.message, true);
