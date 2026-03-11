@@ -778,7 +778,26 @@
     timelineOverlay.classList.remove('visible');
   });
 
-  var TRACKED_PROPS = ['x', 'y', 'width', 'height', 'visible', 'opacity', 'fills', 'strokes', 'effects', 'cornerRadius', 'characters', 'fontSize', 'fontName', 'fontWeight', 'layoutMode', 'itemSpacing', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'name'];
+  var TRACKED_PROPS = [
+    'name', 'visible', 'locked', 'isMask', 'clipsContent',
+    'x', 'y', 'width', 'height', 'rotation', 'constraints',
+    'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
+    'layoutMode', 'layoutWrap', 'itemSpacing', 'counterAxisSpacing',
+    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+    'primaryAxisSizingMode', 'counterAxisSizingMode',
+    'primaryAxisAlignItems', 'counterAxisAlignItems',
+    'layoutSizingHorizontal', 'layoutSizingVertical',
+    'layoutAlign', 'layoutGrow', 'layoutPositioning',
+    'opacity', 'blendMode', 'fills', 'strokes', 'effects',
+    'cornerRadius', 'cornerSmoothing',
+    'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius',
+    'strokeWeight', 'strokeAlign', 'strokeCap', 'strokeJoin', 'dashPattern',
+    'strokeTopWeight', 'strokeBottomWeight', 'strokeLeftWeight', 'strokeRightWeight',
+    'characters', 'fontSize', 'fontName', 'fontWeight',
+    'textAlignHorizontal', 'textAlignVertical', 'textAutoResize',
+    'lineHeight', 'letterSpacing', 'textDecoration', 'textCase',
+    'paragraphIndent', 'paragraphSpacing'
+  ];
 
   function renderTimeline(data) {
     timelineTitle.textContent = data.nodeName;

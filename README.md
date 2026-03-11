@@ -12,7 +12,12 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 - **Auto-versioning** — snapshot labels auto-suggest `v1`, `v2`, `v3`, etc.
 - **Annotations** — add notes to snapshots explaining *why* something changed
 - **Filter & search** — filter changelog by change group or search by node name
-- Tracks layout, style, typography, structure, and naming changes
+- **Snapshot timeline** — view how a single node evolved across multiple snapshots
+- **Deep property tracking** — 55+ properties across layout, style, typography, structure, and naming:
+  - Structure: visibility, locked state, masking, clip content
+  - Layout: position, size, rotation, constraints, min/max dimensions, full auto-layout (alignment, sizing, wrap, spacing)
+  - Style: fills, strokes (weight, alignment, cap, join, dash), effects, blend mode, opacity, corner radius (individual + smoothing)
+  - Typography: font, size, weight, alignment, line height, letter spacing, decoration, case, paragraph spacing
 
 ## Development
 
