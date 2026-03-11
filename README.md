@@ -31,6 +31,50 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 - **Shared with team** — all snapshots, changelogs, and reviews are saved to the Figma file, visible to everyone
 - **Deep property tracking** — 55+ properties across layout, style, typography, structure, and naming
 
+## Using Design Trail in your workflow
+
+### For designers
+
+1. **Capture a snapshot** before making changes (e.g. `v1 - Before review`)
+2. Make your design updates in Figma
+3. **Capture another snapshot** (e.g. `v2 - After review`)
+4. **Quick compare** the two snapshots — the changelog shows exactly what changed
+5. **Flag** anything that needs discussion, **approve** what looks good, add **comments** for context
+6. **Copy the review report** and paste it into your handoff ticket
+
+### For developers
+
+Design Trail gives you a structured, property-level diff of what changed — no more guessing from screenshots or "spot the difference" between Figma versions.
+
+1. Open the Figma file — all snapshots and reviews are already there
+2. Go to the **Changelog tab** to see the latest comparison
+3. Use **Click to highlight** to jump to any changed node directly in Figma
+4. Check **flagged items** first — these need attention
+5. Use **Copy as Markdown** or **Copy Review Report** to paste into:
+   - Pull request descriptions
+   - Jira/Linear tickets
+   - Slack threads
+   - Design documentation
+
+### Example review report output
+
+```markdown
+# Design Review Report
+**From:** v1 - Initial | **To:** v2 - After review
+
+## Summary
+- 3 approved, 1 flagged, 0 pending
+
+## Flagged
+- **Submit Button** (FRAME) — Padding adjusted. Corner radius changed to 12.
+  > Confirm this matches the new spacing scale
+
+## Approved
+- **Header Text** (TEXT) — Font size changed to 18. Font weight changed to 700.
+- **Card Container** (FRAME) — Resized from 320×200 to 360×240.
+- **Icon** (INSTANCE) — Moved right by 8px.
+```
+
 ## Development
 
 ### Prerequisites
