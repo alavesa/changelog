@@ -1,6 +1,6 @@
 # Design Trail 
 
-A Figma plugin that captures design snapshots and generates visual changelogs. Track how your designs evolve over time by comparing snapshots and seeing exactly what changed — added, removed, or modified nodes with detailed property diffs. This is the very first functioning version. Check Roadmap for more details.
+A Figma plugin that captures design snapshots and generates visual changelogs. Track how your designs evolve over time by comparing snapshots and seeing exactly what changed — added, removed, or modified nodes with detailed property diffs.
 
 ## Features
 
@@ -13,11 +13,10 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 - **Annotations** — add notes to snapshots explaining *why* something changed
 - **Filter & search** — filter changelog by change group or search by node name
 - **Snapshot timeline** — view how a single node evolved across multiple snapshots
-- **Deep property tracking** — 55+ properties across layout, style, typography, structure, and naming:
-  - Structure: visibility, locked state, masking, clip content
-  - Layout: position, size, rotation, constraints, min/max dimensions, full auto-layout (alignment, sizing, wrap, spacing)
-  - Style: fills, strokes (weight, alignment, cap, join, dash), effects, blend mode, opacity, corner radius (individual + smoothing)
-  - Typography: font, size, weight, alignment, line height, letter spacing, decoration, case, paragraph spacing
+- **Smart summaries** — plain-English descriptions of changes: "Moved right by 10px. Font changed to Inter Bold."
+- **Design review mode** — approve, flag, or comment on each change. Export a structured review report.
+- **Shared with team** — all snapshots, changelogs, and reviews are saved to the Figma file, visible to everyone
+- **Deep property tracking** — 55+ properties across layout, style, typography, structure, and naming
 
 ## Development
 
@@ -57,7 +56,7 @@ src/
   code.ts       # Plugin entry point, message handling
   snapshot.ts   # Captures node tree as serializable snapshots
   diff.ts       # Compares snapshots, generates changelogs + markdown export
-  storage.ts    # Persistence via Figma clientStorage
+  storage.ts    # Persistence via Figma pluginData (shared with team)
   types.ts      # TypeScript interfaces
 ui/
   ui.html       # Plugin UI (capture, compare, changelog tabs)

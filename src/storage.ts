@@ -1,20 +1,40 @@
 import { Snapshot, SnapshotMeta } from "./types";
 
+// Uses figma.root.setPluginData / getPluginData so that all data is saved
+// to the Figma file itself — shared with anyone who opens the file.
+
 const INDEX_KEY = "changelog_index";
 const SNAP_PREFIX = "changelog_snap_";
 const MAX_SNAPSHOTS = 20;
 
-async function getIndex(): Promise<SnapshotMeta[]> {
-  const index = await figma.clientStorage.getAsync(INDEX_KEY);
-  return index || [];
+function getData(key: string): any {
+  const raw = figma.root.getPluginData(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
 }
 
-async function saveIndex(index: SnapshotMeta[]): Promise<void> {
-  await figma.clientStorage.setAsync(INDEX_KEY, index);
+function setData(key: string, value: any): void {
+  figma.root.setPluginData(key, JSON.stringify(value));
 }
 
-export async function saveSnapshot(snapshot: Snapshot): Promise<{ ok: boolean; message: string }> {
-  const index = await getIndex();
+function deleteData(key: string): void {
+  figma.root.setPluginData(key, "");
+}
+
+function getIndex(): SnapshotMeta[] {
+  return getData(INDEX_KEY) || [];
+}
+
+function saveIndex(index: SnapshotMeta[]): void {
+  setData(INDEX_KEY, index);
+}
+
+export function saveSnapshot(snapshot: Snapshot): { ok: boolean; message: string } {
+  const index = getIndex();
 
   if (index.length >= MAX_SNAPSHOTS) {
     return {
@@ -33,24 +53,32 @@ export async function saveSnapshot(snapshot: Snapshot): Promise<{ ok: boolean; m
   };
 
   index.push(meta);
-  await saveIndex(index);
-  await figma.clientStorage.setAsync(SNAP_PREFIX + snapshot.id, snapshot);
+  saveIndex(index);
+  setData(SNAP_PREFIX + snapshot.id, snapshot);
 
   return { ok: true, message: `Snapshot "${snapshot.label}" saved (${snapshot.nodeCount} nodes).` };
 }
 
-export async function getSnapshots(): Promise<SnapshotMeta[]> {
+export function getSnapshots(): SnapshotMeta[] {
   return getIndex();
 }
 
-export async function getSnapshot(id: string): Promise<Snapshot | null> {
-  const data = await figma.clientStorage.getAsync(SNAP_PREFIX + id);
-  return data || null;
+export function getSnapshot(id: string): Snapshot | null {
+  return getData(SNAP_PREFIX + id);
 }
 
-export async function deleteSnapshot(id: string): Promise<void> {
-  const index = await getIndex();
+export function deleteSnapshot(id: string): void {
+  const index = getIndex();
   const filtered = index.filter((m) => m.id !== id);
-  await saveIndex(filtered);
-  await figma.clientStorage.deleteAsync(SNAP_PREFIX + id);
+  saveIndex(filtered);
+  deleteData(SNAP_PREFIX + id);
+}
+
+// Review data — also stored in the file
+export function saveReview(key: string, data: any): void {
+  setData(key, data);
+}
+
+export function loadReview(key: string): any {
+  return getData(key) || {};
 }

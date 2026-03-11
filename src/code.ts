@@ -1,6 +1,6 @@
 import { captureSnapshot } from "./snapshot";
 import { compareSnapshots, changelogToMarkdown } from "./diff";
-import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot } from "./storage";
+import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot, saveReview, loadReview } from "./storage";
 
 figma.showUI(__html__, { width: 360, height: 520, themeColors: true });
 
@@ -22,11 +22,11 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       if (msg.annotation) {
         snapshot.annotation = msg.annotation;
       }
-      const result = await saveSnapshot(snapshot);
+      const result = saveSnapshot(snapshot);
 
       if (result.ok) {
         figma.ui.postMessage({ type: "snapshot-saved", message: result.message });
-        const list = await getSnapshots();
+        const list = getSnapshots();
         figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
       } else {
         figma.ui.postMessage({ type: "error", message: result.message });
@@ -35,14 +35,14 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "list-snapshots": {
-      const list = await getSnapshots();
+      const list = getSnapshots();
       figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
       break;
     }
 
     case "compare-snapshots": {
-      const oldSnap = await getSnapshot(msg.fromId);
-      const newSnap = await getSnapshot(msg.toId);
+      const oldSnap = getSnapshot(msg.fromId);
+      const newSnap = getSnapshot(msg.toId);
 
       if (!oldSnap || !newSnap) {
         figma.ui.postMessage({
@@ -58,8 +58,8 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "delete-snapshot": {
-      await deleteSnapshot(msg.id);
-      const list = await getSnapshots();
+      deleteSnapshot(msg.id);
+      const list = getSnapshots();
       figma.ui.postMessage({
         type: "snapshot-list",
         snapshots: list,
@@ -86,7 +86,7 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "node-timeline": {
-      const index = await getSnapshots();
+      const index = getSnapshots();
       const timeline: Array<{
         snapshotId: string;
         snapshotLabel: string;
@@ -95,7 +95,7 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       }> = [];
 
       for (const meta of index) {
-        const snap = await getSnapshot(meta.id);
+        const snap = getSnapshot(meta.id);
         if (snap && snap.nodes[msg.nodeId]) {
           timeline.push({
             snapshotId: meta.id,
@@ -124,13 +124,13 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "save-review": {
-      await figma.clientStorage.setAsync(msg.key, msg.data);
+      saveReview(msg.key, msg.data);
       break;
     }
 
     case "load-review": {
-      const data = await figma.clientStorage.getAsync(msg.key);
-      figma.ui.postMessage({ type: "review-loaded", data: data || {} });
+      const data = loadReview(msg.key);
+      figma.ui.postMessage({ type: "review-loaded", data });
       break;
     }
   }
