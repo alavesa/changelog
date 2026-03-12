@@ -5,7 +5,9 @@ import { Snapshot, SnapshotMeta } from "./types";
 
 const INDEX_KEY = "changelog_index";
 const SNAP_PREFIX = "changelog_snap_";
+const CHUNK_PREFIX = "changelog_chunk_";
 const MAX_SNAPSHOTS = 20;
+const CHUNK_SIZE = 50; // nodes per chunk
 
 function getData(key: string): any {
   try {
@@ -56,6 +58,32 @@ export function saveSnapshot(snapshot: Snapshot): { ok: boolean; message: string
       };
     }
 
+    // Split nodes into chunks to stay under pluginData size limits
+    const nodeIds = Object.keys(snapshot.nodes);
+    const chunkCount = Math.ceil(nodeIds.length / CHUNK_SIZE);
+
+    for (let i = 0; i < chunkCount; i++) {
+      const chunkIds = nodeIds.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+      const chunkNodes: Record<string, any> = {};
+      for (const id of chunkIds) {
+        chunkNodes[id] = snapshot.nodes[id];
+      }
+      setData(CHUNK_PREFIX + snapshot.id + "_" + i, chunkNodes);
+    }
+
+    // Save header (without nodes) pointing to chunks
+    const header = {
+      id: snapshot.id,
+      label: snapshot.label,
+      annotation: snapshot.annotation,
+      timestamp: snapshot.timestamp,
+      rootNodeId: snapshot.rootNodeId,
+      rootNodeName: snapshot.rootNodeName,
+      nodeCount: snapshot.nodeCount,
+      chunkCount: chunkCount,
+    };
+    setData(SNAP_PREFIX + snapshot.id, header);
+
     const meta: SnapshotMeta = {
       id: snapshot.id,
       label: snapshot.label,
@@ -67,11 +95,14 @@ export function saveSnapshot(snapshot: Snapshot): { ok: boolean; message: string
 
     index.push(meta);
     saveIndex(index);
-    setData(SNAP_PREFIX + snapshot.id, snapshot);
 
     return { ok: true, message: `Snapshot "${snapshot.label}" saved (${snapshot.nodeCount} nodes).` };
   } catch (e) {
     console.error("saveSnapshot error:", e);
+    // Clean up any partial chunks on failure
+    cleanupChunks(snapshot.id);
+    deleteData(SNAP_PREFIX + snapshot.id);
+
     const errMsg = String(e);
     if (errMsg.includes("size") || errMsg.includes("quota") || errMsg.includes("large") || errMsg.includes("exceed")) {
       return {
@@ -88,14 +119,57 @@ export function getSnapshots(): SnapshotMeta[] {
 }
 
 export function getSnapshot(id: string): Snapshot | null {
-  return getData(SNAP_PREFIX + id);
+  const header = getData(SNAP_PREFIX + id);
+  if (!header) return null;
+
+  // Legacy format: nodes stored directly in header
+  if (header.nodes) return header as Snapshot;
+
+  // Chunked format: reassemble from chunks
+  const nodes: Record<string, any> = {};
+  const chunkCount = header.chunkCount || 0;
+
+  for (let i = 0; i < chunkCount; i++) {
+    const chunk = getData(CHUNK_PREFIX + id + "_" + i);
+    if (chunk) {
+      Object.assign(nodes, chunk);
+    }
+  }
+
+  return {
+    id: header.id,
+    label: header.label,
+    annotation: header.annotation,
+    timestamp: header.timestamp,
+    rootNodeId: header.rootNodeId,
+    rootNodeName: header.rootNodeName,
+    nodeCount: header.nodeCount,
+    nodes,
+  };
+}
+
+function cleanupChunks(id: string): void {
+  // Remove all chunk keys for a snapshot
+  for (let i = 0; i < 200; i++) {
+    const key = CHUNK_PREFIX + id + "_" + i;
+    const raw = figma.root.getPluginData(key);
+    if (!raw) break;
+    deleteData(key);
+  }
 }
 
 export function deleteSnapshot(id: string): void {
+  const header = getData(SNAP_PREFIX + id);
+  if (header && header.chunkCount) {
+    for (let i = 0; i < header.chunkCount; i++) {
+      deleteData(CHUNK_PREFIX + id + "_" + i);
+    }
+  }
+  deleteData(SNAP_PREFIX + id);
+
   const index = getIndex();
   const filtered = index.filter((m) => m.id !== id);
   saveIndex(filtered);
-  deleteData(SNAP_PREFIX + id);
 }
 
 // Review data — also stored in the file
