@@ -63,75 +63,35 @@ function round2(n: number): number {
 function serializeNode(node: SceneNode): NodeSnapshot {
   const n = node as any;
 
-  // Start with required fields only
   const snap: NodeSnapshot = {
     id: node.id,
     name: node.name,
     type: node.type,
     visible: node.visible,
-    locked: node.locked,
+    locked: false,
     x: round2(node.x),
     y: round2(node.y),
     width: round2(node.width),
     height: round2(node.height),
     rotation: "rotation" in n ? round2(n.rotation) : 0,
     opacity: "opacity" in n ? n.opacity : 1,
-    blendMode: "blendMode" in n ? n.blendMode : "PASS_THROUGH",
-    isMask: "isMask" in n ? n.isMask : false,
+    blendMode: "PASS_THROUGH",
+    isMask: false,
     fills: extractFills(node),
     strokes: extractStrokes(node),
     effects: extractEffects(node),
     strokeWeight: "strokeWeight" in n ? safeMixed(n.strokeWeight) : "0",
-    strokeAlign: "strokeAlign" in n ? n.strokeAlign : "",
-    strokeCap: "strokeCap" in n ? safeMixed(n.strokeCap) : "",
-    strokeJoin: "strokeJoin" in n ? safeMixed(n.strokeJoin) : "",
-    dashPattern: "dashPattern" in n ? safeStringify(n.dashPattern) : "[]",
+    strokeAlign: "",
+    strokeCap: "",
+    strokeJoin: "",
+    dashPattern: "[]",
     cornerRadius: extractCornerRadius(node),
-    cornerSmoothing: "cornerSmoothing" in n ? n.cornerSmoothing : 0,
+    cornerSmoothing: 0,
   };
-
-  // Individual corner radii — only if non-zero
-  if ("topLeftRadius" in n) {
-    const tl = round2(n.topLeftRadius);
-    const tr = round2(n.topRightRadius);
-    const bl = round2(n.bottomLeftRadius);
-    const br = round2(n.bottomRightRadius);
-    if (tl || tr || bl || br) {
-      snap.topLeftRadius = tl;
-      snap.topRightRadius = tr;
-      snap.bottomLeftRadius = bl;
-      snap.bottomRightRadius = br;
-    }
-  }
-
-  // Individual stroke weights — only if non-zero
-  if ("strokeTopWeight" in n) {
-    const st = round2(n.strokeTopWeight);
-    const sb = round2(n.strokeBottomWeight);
-    const sl = round2(n.strokeLeftWeight);
-    const sr = round2(n.strokeRightWeight);
-    if (st || sb || sl || sr) {
-      snap.strokeTopWeight = st;
-      snap.strokeBottomWeight = sb;
-      snap.strokeLeftWeight = sl;
-      snap.strokeRightWeight = sr;
-    }
-  }
-
-  // Constraints
-  if ("constraints" in n) {
-    snap.constraints = safeStringify(n.constraints);
-  }
-
-  // Clips content (frames)
-  if ("clipsContent" in n) {
-    snap.clipsContent = n.clipsContent;
-  }
 
   // Text-specific properties
   if (node.type === "TEXT") {
     const t = node as TextNode;
-    // Truncate very long text content to save space
     const chars = t.characters;
     snap.characters = chars.length > 500 ? chars.substring(0, 500) + "…" : chars;
     snap.fontSize = t.fontSize === figma.mixed ? "mixed" : t.fontSize;
@@ -143,8 +103,6 @@ function serializeNode(node: SceneNode): NodeSnapshot {
     snap.fontWeight = fontWeight === figma.mixed ? undefined : (fontWeight as number);
 
     snap.textAlignHorizontal = t.textAlignHorizontal;
-    snap.textAlignVertical = t.textAlignVertical;
-    snap.textAutoResize = t.textAutoResize;
 
     const lh = t.lineHeight;
     snap.lineHeight = lh === figma.mixed ? "mixed" : safeStringify(lh);
@@ -154,58 +112,17 @@ function serializeNode(node: SceneNode): NodeSnapshot {
 
     const td = t.textDecoration;
     snap.textDecoration = td === figma.mixed ? "mixed" : td;
-
-    const tc = t.textCase;
-    snap.textCase = tc === figma.mixed ? "mixed" : tc;
-
-    snap.paragraphIndent = t.paragraphIndent;
-    snap.paragraphSpacing = t.paragraphSpacing;
   }
 
-  // Layout-specific (auto-layout frames)
+  // Auto-layout — only the key properties
   if ("layoutMode" in n) {
     snap.layoutMode = n.layoutMode;
-    snap.layoutWrap = n.layoutWrap;
-    snap.primaryAxisSizingMode = n.primaryAxisSizingMode;
-    snap.counterAxisSizingMode = n.counterAxisSizingMode;
-    snap.primaryAxisAlignItems = n.primaryAxisAlignItems;
-    snap.counterAxisAlignItems = n.counterAxisAlignItems;
     if (n.layoutMode !== "NONE") {
       snap.itemSpacing = n.itemSpacing;
-      snap.counterAxisSpacing = n.counterAxisSpacing === null ? "auto" : n.counterAxisSpacing;
       snap.paddingTop = n.paddingTop;
       snap.paddingRight = n.paddingRight;
       snap.paddingBottom = n.paddingBottom;
       snap.paddingLeft = n.paddingLeft;
-    }
-  }
-
-  // Layout sizing (available on nodes in auto-layout)
-  if ("layoutSizingHorizontal" in n) {
-    snap.layoutSizingHorizontal = n.layoutSizingHorizontal;
-    snap.layoutSizingVertical = n.layoutSizingVertical;
-  }
-
-  // Auto-layout child properties
-  if ("layoutAlign" in n) {
-    snap.layoutAlign = n.layoutAlign;
-    snap.layoutGrow = n.layoutGrow;
-  }
-  if ("layoutPositioning" in n) {
-    snap.layoutPositioning = n.layoutPositioning;
-  }
-
-  // Min/max dimensions — only if set (not "none")
-  if ("minWidth" in n) {
-    const minW = n.minWidth === null ? "none" : n.minWidth;
-    const maxW = n.maxWidth === null ? "none" : n.maxWidth;
-    const minH = n.minHeight === null ? "none" : n.minHeight;
-    const maxH = n.maxHeight === null ? "none" : n.maxHeight;
-    if (minW !== "none" || maxW !== "none" || minH !== "none" || maxH !== "none") {
-      snap.minWidth = minW;
-      snap.maxWidth = maxW;
-      snap.minHeight = minH;
-      snap.maxHeight = maxH;
     }
   }
 

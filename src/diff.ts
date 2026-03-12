@@ -11,77 +11,42 @@ type PropGroup = PropertyChange["group"];
 const PROPERTY_GROUPS: Record<string, PropGroup> = {
   // Structure
   visible: "structure",
-  locked: "structure",
   children: "structure",
-  isMask: "structure",
-  clipsContent: "structure",
   // Layout — position & size
   x: "layout",
   y: "layout",
   width: "layout",
   height: "layout",
   rotation: "layout",
-  constraints: "layout",
-  minWidth: "layout",
-  maxWidth: "layout",
-  minHeight: "layout",
-  maxHeight: "layout",
   // Layout — auto-layout
   layoutMode: "layout",
-  layoutWrap: "layout",
   itemSpacing: "layout",
-  counterAxisSpacing: "layout",
   paddingTop: "layout",
   paddingRight: "layout",
   paddingBottom: "layout",
   paddingLeft: "layout",
-  primaryAxisSizingMode: "layout",
-  counterAxisSizingMode: "layout",
-  primaryAxisAlignItems: "layout",
-  counterAxisAlignItems: "layout",
-  layoutSizingHorizontal: "layout",
-  layoutSizingVertical: "layout",
-  layoutAlign: "layout",
-  layoutGrow: "layout",
-  layoutPositioning: "layout",
-  // Style — fills, strokes, effects
+  // Style
   fills: "style",
   strokes: "style",
   effects: "style",
   opacity: "style",
-  blendMode: "style",
   cornerRadius: "style",
-  cornerSmoothing: "style",
-  topLeftRadius: "style",
-  topRightRadius: "style",
-  bottomLeftRadius: "style",
-  bottomRightRadius: "style",
   strokeWeight: "style",
-  strokeAlign: "style",
-  strokeCap: "style",
-  strokeJoin: "style",
-  dashPattern: "style",
-  strokeTopWeight: "style",
-  strokeBottomWeight: "style",
-  strokeLeftWeight: "style",
-  strokeRightWeight: "style",
   // Typography
   characters: "typography",
   fontSize: "typography",
   fontName: "typography",
   fontWeight: "typography",
   textAlignHorizontal: "typography",
-  textAlignVertical: "typography",
-  textAutoResize: "typography",
   lineHeight: "typography",
   letterSpacing: "typography",
   textDecoration: "typography",
-  textCase: "typography",
-  paragraphIndent: "typography",
-  paragraphSpacing: "typography",
   // Naming
   name: "naming",
 };
+
+// Ignore changes smaller than this threshold for numeric properties
+const NUMERIC_THRESHOLD = 0.5;
 
 const COMPARED_PROPERTIES = Object.keys(PROPERTY_GROUPS);
 
@@ -94,6 +59,8 @@ function valueToString(value: unknown): string {
   return String(value);
 }
 
+const NUMERIC_PROPS = new Set(["x", "y", "width", "height", "rotation", "opacity", "itemSpacing", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "cornerRadius", "strokeWeight", "fontSize", "fontWeight"]);
+
 function compareNodes(
   oldNode: NodeSnapshot,
   newNode: NodeSnapshot
@@ -105,6 +72,15 @@ function compareNodes(
     const newVal = valueToString((newNode as any)[prop]);
 
     if (oldVal !== newVal) {
+      // Skip sub-pixel noise for numeric properties
+      if (NUMERIC_PROPS.has(prop)) {
+        const oldNum = parseFloat(oldVal);
+        const newNum = parseFloat(newVal);
+        if (!isNaN(oldNum) && !isNaN(newNum) && Math.abs(newNum - oldNum) < NUMERIC_THRESHOLD) {
+          continue;
+        }
+      }
+
       changes.push({
         property: prop,
         group: PROPERTY_GROUPS[prop],
