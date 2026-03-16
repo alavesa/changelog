@@ -25,11 +25,13 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 - **Click to highlight** — jump to any changed node in your Figma file
 - **Snapshot timeline** — view how a single node evolved across multiple snapshots
 - **Design review mode** — approve, flag, or comment on each change. Export a structured review report.
-- **Export as Markdown** for sharing changelogs with your team
+- **Export as Markdown, JSON, or CSV** for sharing changelogs with your team or feeding into external tools
+- **Enter key shortcut** — press Enter to capture a snapshot instantly
 
 ### Collaboration
 - **Shared with team** — all snapshots, changelogs, and reviews are saved to the Figma file, visible to everyone
-- **Deep property tracking** — 55+ properties across layout, style, typography, structure, and naming
+- **Deep property tracking** — ~30 key properties across layout, style, typography, structure, and naming
+- **Dynamic limits display** — see snapshot usage (X/20) with color warnings when nearing capacity
 
 ## Using Design Trail in your workflow
 
@@ -50,7 +52,7 @@ Design Trail gives you a structured, property-level diff of what changed — no 
 2. Go to the **Changelog tab** to see the latest comparison
 3. Use **Click to highlight** to jump to any changed node directly in Figma
 4. Check **flagged items** first — these need attention
-5. Use **Copy as Markdown** or **Copy Review Report** to paste into:
+5. Use **Copy as Markdown**, **JSON**, **CSV**, or **Copy Review Report** to paste into:
    - Pull request descriptions
    - Jira/Linear tickets
    - Slack threads
@@ -112,7 +114,7 @@ npm run watch
 src/
   code.ts       # Plugin entry point, message handling
   snapshot.ts   # Captures node tree as serializable snapshots
-  diff.ts       # Compares snapshots, generates changelogs + markdown export
+  diff.ts       # Compares snapshots, generates changelogs + markdown/JSON/CSV export
   storage.ts    # Persistence via Figma pluginData (shared with team)
   types.ts      # TypeScript interfaces
 ui/
@@ -131,7 +133,7 @@ manifest.json   # Figma plugin manifest
 ### Mid-term
 - [ ] Visual side-by-side preview — capture thumbnail exports at snapshot time, show before/after images
 - [ ] Compare across different root nodes — match by node name/structure instead of ID
-- [ ] Export to JSON/CSV for external tools and design system docs
+- [x] Export to JSON/CSV for external tools and design system docs
 - [ ] Auto-snapshot on page change or interval
 
 ### Long-term

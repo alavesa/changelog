@@ -657,8 +657,8 @@
     <textarea id="snapshot-annotation" rows="2" placeholder="e.g. Adjusted spacing after design review"></textarea>
   </div>
   <button id="btn-capture">Capture Snapshot</button>
-  <div style="margin-top:8px;padding:8px 10px;background:#1e1e1e;border-radius:4px;font-size:10px;color:#777;line-height:1.5;">
-    <strong style="color:#999;">Limits:</strong> Max 20 snapshots · Up to 5,000 nodes per snapshot · Text content truncated at 500 chars
+  <div id="limits-info" style="margin-top:8px;padding:8px 10px;background:#1e1e1e;border-radius:4px;font-size:10px;color:#777;line-height:1.5;">
+    <strong style="color:#999;">0/20 snapshots</strong> · Up to 5,000 nodes per snapshot
   </div>
   <div class="snapshot-list" id="snapshot-list"></div>
   <button class="danger" id="btn-clear-all" style="margin-top:12px;width:100%;font-size:10px;padding:6px;" onclick="if(confirm('Clear all snapshots and reviews from this file?')){parent.postMessage({pluginMessage:{type:'clear-all-data'}},'*')}">Clear All Data</button>
@@ -671,7 +671,7 @@
     <div class="qc-desc" id="qc-desc"></div>
     <button id="btn-quick-compare">Compare Latest Changes</button>
   </div>
-  <div style="font-size:10px;text-align:center;color:#666;margin-bottom:8px;" id="or-divider" style="display:none;">or pick specific snapshots</div>
+  <div id="or-divider" style="font-size:10px;text-align:center;color:#666;margin-bottom:8px;display:none;">or pick specific snapshots</div>
   <div class="field">
     <label>From (older)</label>
     <select id="select-from"><option value="">Loading...</option></select>
@@ -714,7 +714,11 @@
     </div>
     <div id="changelog-entries"></div>
     <div style="display:flex;gap:8px;margin-top:12px;">
-      <button id="btn-export" class="secondary" style="flex:1;">Copy as Markdown</button>
+      <button id="btn-export" class="secondary" style="flex:1;">Markdown</button>
+      <button id="btn-export-json" class="secondary" style="flex:1;">JSON</button>
+      <button id="btn-export-csv" class="secondary" style="flex:1;">CSV</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
       <button id="btn-export-review" class="secondary" style="flex:1;">Copy Review Report</button>
     </div>
   </div>
@@ -795,6 +799,11 @@
     snapshotAnnotation.value = '';
   });
 
+  // Enter key to capture
+  snapshotLabel.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); btnCapture.click(); }
+  });
+
   // Relative time helper
   function timeAgo(ts) {
     var diff = Date.now() - ts;
@@ -836,9 +845,18 @@
   }
 
   // Render snapshot list
+  function updateLimitsInfo() {
+    var el = document.getElementById('limits-info');
+    if (!el) return;
+    var count = snapshots.length;
+    var color = count >= 18 ? '#FF9800' : (count >= 20 ? '#F44336' : '#999');
+    el.innerHTML = '<strong style="color:' + color + ';">' + count + '/20 snapshots</strong> \u00b7 Up to 5,000 nodes per snapshot';
+  }
+
   function renderSnapshotList() {
     updateWorkflow();
     updateQuickCompare();
+    updateLimitsInfo();
 
     if (snapshots.length === 0) {
       snapshotList.innerHTML = '<div class="empty-state">' +
@@ -1474,6 +1492,18 @@
     parent.postMessage({ pluginMessage: { type: 'export-changelog', changelog: currentChangelog } }, '*');
   });
 
+  // Export as JSON
+  document.getElementById('btn-export-json').addEventListener('click', function() {
+    if (!currentChangelog) return;
+    parent.postMessage({ pluginMessage: { type: 'export-json', changelog: currentChangelog } }, '*');
+  });
+
+  // Export as CSV
+  document.getElementById('btn-export-csv').addEventListener('click', function() {
+    if (!currentChangelog) return;
+    parent.postMessage({ pluginMessage: { type: 'export-csv', changelog: currentChangelog } }, '*');
+  });
+
   // Export review report
   document.getElementById('btn-export-review').addEventListener('click', function() {
     if (!currentChangelog) return;
@@ -1567,6 +1597,17 @@
         document.body.removeChild(ta);
         showToast('Markdown copied to clipboard!', false);
         break;
+
+      case 'export-data': {
+        var ta2 = document.createElement('textarea');
+        ta2.value = msg.data;
+        document.body.appendChild(ta2);
+        ta2.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta2);
+        showToast(msg.format + ' copied to clipboard!', false);
+        break;
+      }
 
       case 'data-cleared':
         showToast(msg.message, false);

@@ -1,5 +1,5 @@
 import { captureSnapshot } from "./snapshot";
-import { compareSnapshots, changelogToMarkdown } from "./diff";
+import { compareSnapshots, changelogToMarkdown, changelogToJSON, changelogToCSV } from "./diff";
 import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot, saveReview, loadReview } from "./storage";
 
 figma.showUI(__html__, { width: 360, height: 520, themeColors: true });
@@ -131,6 +131,18 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     case "export-changelog": {
       const markdown = changelogToMarkdown(msg.changelog);
       figma.ui.postMessage({ type: "export-markdown", markdown });
+      break;
+    }
+
+    case "export-json": {
+      const json = changelogToJSON(msg.changelog);
+      figma.ui.postMessage({ type: "export-data", data: json, format: "JSON" });
+      break;
+    }
+
+    case "export-csv": {
+      const csv = changelogToCSV(msg.changelog);
+      figma.ui.postMessage({ type: "export-data", data: csv, format: "CSV" });
       break;
     }
 

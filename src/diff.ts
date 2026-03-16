@@ -225,3 +225,45 @@ export function changelogToMarkdown(changelog: Changelog): string {
 
   return lines.join("\n");
 }
+
+export function changelogToJSON(changelog: Changelog): string {
+  return JSON.stringify({
+    from: { label: changelog.fromSnapshot.label, timestamp: changelog.fromSnapshot.timestamp },
+    to: { label: changelog.toSnapshot.label, timestamp: changelog.toSnapshot.timestamp },
+    summary: changelog.summary,
+    entries: changelog.entries.map((e) => ({
+      nodeId: e.nodeId,
+      nodeName: e.nodeName,
+      nodeType: e.nodeType,
+      category: e.category,
+      changes: e.changes.map((c) => ({
+        property: c.property,
+        group: c.group,
+        oldValue: c.oldValue,
+        newValue: c.newValue,
+      })),
+    })),
+  }, null, 2);
+}
+
+export function changelogToCSV(changelog: Changelog): string {
+  const rows: string[] = [];
+  rows.push("Category,Node Name,Node Type,Node ID,Property,Group,Old Value,New Value");
+  for (const entry of changelog.entries) {
+    if (entry.changes.length === 0) {
+      rows.push(csvRow([entry.category, entry.nodeName, entry.nodeType, entry.nodeId, "", "", "", ""]));
+    } else {
+      for (const c of entry.changes) {
+        rows.push(csvRow([entry.category, entry.nodeName, entry.nodeType, entry.nodeId, c.property, c.group, c.oldValue, c.newValue]));
+      }
+    }
+  }
+  return rows.join("\n");
+}
+
+function csvRow(fields: string[]): string {
+  return fields.map((f) => {
+    const s = String(f).replace(/"/g, '""');
+    return s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1 ? `"${s}"` : s;
+  }).join(",");
+}
