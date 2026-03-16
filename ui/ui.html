@@ -657,6 +657,9 @@
     <textarea id="snapshot-annotation" rows="2" placeholder="e.g. Adjusted spacing after design review"></textarea>
   </div>
   <button id="btn-capture">Capture Snapshot</button>
+  <div style="margin-top:8px;padding:8px 10px;background:#1e1e1e;border-radius:4px;font-size:10px;color:#777;line-height:1.5;">
+    <strong style="color:#999;">Limits:</strong> Max 20 snapshots · Up to 5,000 nodes per snapshot · Text content truncated at 500 chars
+  </div>
   <div class="snapshot-list" id="snapshot-list"></div>
   <button class="danger" id="btn-clear-all" style="margin-top:12px;width:100%;font-size:10px;padding:6px;" onclick="if(confirm('Clear all snapshots and reviews from this file?')){parent.postMessage({pluginMessage:{type:'clear-all-data'}},'*')}">Clear All Data</button>
 </div>
