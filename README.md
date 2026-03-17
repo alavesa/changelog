@@ -59,6 +59,16 @@ Design Trail gives you a structured, property-level diff of what changed — no 
    - Slack threads
    - Design documentation
 
+### For product owners
+
+No more asking "what changed since last review?" or digging through Slack threads to piece together what happened.
+
+1. Open the Figma file — the full history of changes is right there
+2. Compare any two snapshots to see exactly what evolved
+3. Read the **plain-English summaries** — no design jargon needed
+4. **Approve** what looks good, **flag** what needs discussion
+5. Export a **review report** for stakeholder updates or sign-off documentation
+
 ### Example review report output
 
 ```markdown
