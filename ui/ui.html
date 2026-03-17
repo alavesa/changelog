@@ -938,7 +938,8 @@
 
   // Render select dropdowns
   function renderSelects() {
-    var options = snapshots.map(function(s) {
+    var reversed = snapshots.slice().reverse();
+    var options = reversed.map(function(s) {
       return '<option value="' + s.id + '">' + esc(s.label) + ' (' + timeAgo(s.timestamp) + ')</option>';
     }).join('');
 
@@ -949,9 +950,9 @@
     } else {
       selectFrom.innerHTML = options;
       selectTo.innerHTML = options;
-      // Default: second-to-last=from, last=to
-      selectFrom.selectedIndex = snapshots.length - 2;
-      selectTo.selectedIndex = snapshots.length - 1;
+      // Default: latest=to (index 0), second latest=from (index 1)
+      selectFrom.selectedIndex = 1;
+      selectTo.selectedIndex = 0;
       btnCompare.disabled = false;
     }
   }

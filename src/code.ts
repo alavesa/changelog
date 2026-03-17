@@ -32,7 +32,15 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       const result = saveSnapshot(snapshot);
 
       if (result.ok) {
-        // Capture thumbnail (non-blocking — snapshot already saved)
+        let message = result.message;
+        if (capture.warning) {
+          message += " ⚠ " + capture.warning;
+        }
+        figma.ui.postMessage({ type: "snapshot-saved", message });
+        const list = getSnapshots();
+        figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
+
+        // Capture thumbnail after UI is updated (non-blocking)
         try {
           const thumb = await captureThumbnail(node);
           if (thumb) {
@@ -41,14 +49,6 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
         } catch (e) {
           console.warn("Thumbnail capture skipped:", e);
         }
-
-        let message = result.message;
-        if (capture.warning) {
-          message += " ⚠ " + capture.warning;
-        }
-        figma.ui.postMessage({ type: "snapshot-saved", message });
-        const list = getSnapshots();
-        figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
       } else {
         figma.ui.postMessage({ type: "error", message: result.message });
       }
