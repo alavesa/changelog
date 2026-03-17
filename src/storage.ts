@@ -24,7 +24,6 @@ function getData(key: string): any {
 function setData(key: string, value: any): void {
   try {
     const json = JSON.stringify(value);
-    console.log("setData:", key, "size:", json.length, "bytes");
     figma.root.setPluginData(key, json);
   } catch (e) {
     console.error("setData error for key", key, e);

@@ -14,6 +14,7 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 ### Capture & compare
 - **Capture snapshots** of any selected frame or node
 - **Compare snapshots** to generate a structured changelog
+- **Visual side-by-side preview** — before/after thumbnails captured automatically
 - **Visual diff** showing added, removed, and modified nodes with property-level detail
 - **Annotations** — add notes to snapshots explaining *why* something changed
 - **Comparison header** — always see which snapshots you're comparing (e.g. "v1 → v2")
@@ -131,7 +132,7 @@ manifest.json   # Figma plugin manifest
 - [x] Snapshot timeline — view how a single node evolved across multiple snapshots
 
 ### Mid-term
-- [ ] Visual side-by-side preview — capture thumbnail exports at snapshot time, show before/after images
+- [x] Visual side-by-side preview — capture thumbnail exports at snapshot time, show before/after images
 - [ ] Compare across different root nodes — match by node name/structure instead of ID
 - [x] Export to JSON/CSV for external tools and design system docs
 - [ ] Auto-snapshot on page change or interval
