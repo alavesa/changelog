@@ -624,6 +624,48 @@
     margin-top: 3px;
     padding-left: 2px;
   }
+
+  /* Visual preview */
+  .visual-preview {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: #1e1e1e;
+    border-radius: 6px;
+    border: 1px solid #444;
+  }
+  .preview-pane {
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+  }
+  .preview-pane img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #2c2c2c;
+  }
+  .preview-label {
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .preview-placeholder {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2c2c2c;
+    border-radius: 4px;
+    border: 1px dashed #555;
+    color: #666;
+    font-size: 11px;
+  }
 </style>
 </head>
 <body>
@@ -695,6 +737,16 @@
   </div>
   <div id="changelog-content" style="display: none;">
     <div class="comparison-header" id="comparison-header"></div>
+    <div id="visual-preview" class="visual-preview" style="display:none;">
+      <div class="preview-pane">
+        <div class="preview-label">Before</div>
+        <div id="preview-before"></div>
+      </div>
+      <div class="preview-pane">
+        <div class="preview-label">After</div>
+        <div id="preview-after"></div>
+      </div>
+    </div>
     <div class="summary-bar" id="summary-bar"></div>
     <div class="review-bar" id="review-bar" style="display:none;">
       <div class="review-stat approved"><span id="review-approved-count">0</span> approved</div>
@@ -743,6 +795,8 @@
   let currentChangelog = null;
   var reviewState = {}; // { nodeId: { status: 'approved'|'flagged'|'pending', comment: '' } }
   var reviewKey = null; // 'review_fromId_toId'
+  var currentFromThumbnail = null;
+  var currentToThumbnail = null;
 
   // Elements
   const tabs = document.querySelectorAll('.tab');
@@ -866,7 +920,7 @@
         '</div>';
       return;
     }
-    snapshotList.innerHTML = snapshots.map(function(s) {
+    snapshotList.innerHTML = snapshots.slice().reverse().map(function(s) {
       var relTime = timeAgo(s.timestamp);
       var annotationHtml = s.annotation
         ? '<div class="snapshot-annotation" title="' + esc(s.annotation) + '">' + esc(s.annotation) + '</div>'
@@ -928,6 +982,27 @@
   });
 
   // Render changelog
+  function renderVisualPreview() {
+    var container = document.getElementById('visual-preview');
+    var beforeEl = document.getElementById('preview-before');
+    var afterEl = document.getElementById('preview-after');
+
+    if (!currentFromThumbnail && !currentToThumbnail) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+
+    beforeEl.innerHTML = currentFromThumbnail
+      ? '<img src="' + currentFromThumbnail + '" alt="Before">'
+      : '<div class="preview-placeholder">No preview</div>';
+
+    afterEl.innerHTML = currentToThumbnail
+      ? '<img src="' + currentToThumbnail + '" alt="After">'
+      : '<div class="preview-placeholder">No preview</div>';
+  }
+
   function renderChangelog(changelog) {
     currentChangelog = changelog;
     changelogEmpty.style.display = 'none';
@@ -1573,7 +1648,10 @@
         break;
 
       case 'changelog-result':
+        currentFromThumbnail = msg.fromThumbnail || null;
+        currentToThumbnail = msg.toThumbnail || null;
         renderChangelog(msg.changelog);
+        renderVisualPreview();
         showToast('Changelog generated.', false);
         break;
 

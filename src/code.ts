@@ -1,6 +1,6 @@
-import { captureSnapshot } from "./snapshot";
+import { captureSnapshot, captureThumbnail } from "./snapshot";
 import { compareSnapshots, changelogToMarkdown, changelogToJSON, changelogToCSV } from "./diff";
-import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot, saveReview, loadReview } from "./storage";
+import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot, saveReview, loadReview, saveThumbnail, getThumbnail } from "./storage";
 
 figma.showUI(__html__, { width: 360, height: 520, themeColors: true });
 
@@ -32,6 +32,16 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       const result = saveSnapshot(snapshot);
 
       if (result.ok) {
+        // Capture thumbnail (non-blocking — snapshot already saved)
+        try {
+          const thumb = await captureThumbnail(node);
+          if (thumb) {
+            saveThumbnail(snapshot.id, thumb);
+          }
+        } catch (e) {
+          console.warn("Thumbnail capture skipped:", e);
+        }
+
         let message = result.message;
         if (capture.warning) {
           message += " ⚠ " + capture.warning;
@@ -64,7 +74,9 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       }
 
       const changelog = compareSnapshots(oldSnap, newSnap);
-      figma.ui.postMessage({ type: "changelog-result", changelog });
+      const fromThumbnail = getThumbnail(msg.fromId);
+      const toThumbnail = getThumbnail(msg.toId);
+      figma.ui.postMessage({ type: "changelog-result", changelog, fromThumbnail, toThumbnail });
       break;
     }
 

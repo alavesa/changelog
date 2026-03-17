@@ -6,6 +6,7 @@ import { Snapshot, SnapshotMeta } from "./types";
 const INDEX_KEY = "changelog_index";
 const SNAP_PREFIX = "changelog_snap_";
 const CHUNK_PREFIX = "changelog_chunk_";
+const THUMB_PREFIX = "changelog_thumb_";
 const MAX_SNAPSHOTS = 20;
 const CHUNK_SIZE = 50; // nodes per chunk
 
@@ -158,6 +159,26 @@ function cleanupChunks(id: string): void {
   }
 }
 
+export function saveThumbnail(snapshotId: string, base64: string): boolean {
+  try {
+    setData(THUMB_PREFIX + snapshotId, base64);
+    return true;
+  } catch (e) {
+    console.warn("saveThumbnail failed (too large?):", e);
+    return false;
+  }
+}
+
+export function getThumbnail(snapshotId: string): string | null {
+  try {
+    const raw = figma.root.getPluginData(THUMB_PREFIX + snapshotId);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
 export function deleteSnapshot(id: string): void {
   const header = getData(SNAP_PREFIX + id);
   if (header && header.chunkCount) {
@@ -166,6 +187,7 @@ export function deleteSnapshot(id: string): void {
     }
   }
   deleteData(SNAP_PREFIX + id);
+  deleteData(THUMB_PREFIX + id);
 
   const index = getIndex();
   const filtered = index.filter((m) => m.id !== id);

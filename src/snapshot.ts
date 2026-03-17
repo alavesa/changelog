@@ -170,6 +170,24 @@ export interface CaptureResult {
   error: string | null;
 }
 
+export async function captureThumbnail(node: SceneNode): Promise<string | null> {
+  try {
+    var maxDim = Math.max(node.width, node.height);
+    var scale = maxDim > 512 ? 512 / maxDim : 1;
+
+    var bytes = await (node as any).exportAsync({
+      format: "PNG",
+      constraint: { type: "SCALE", value: scale },
+    });
+
+    var base64 = figma.base64Encode(bytes);
+    return "data:image/png;base64," + base64;
+  } catch (e) {
+    console.warn("Thumbnail capture failed:", e);
+    return null;
+  }
+}
+
 export function captureSnapshot(node: SceneNode, label: string): CaptureResult {
   // Pre-check node count
   const totalNodes = countDescendants(node);
