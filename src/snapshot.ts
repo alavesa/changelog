@@ -1,19 +1,20 @@
 import { NodeSnapshot, Snapshot } from "./types";
 
+let _idCounter = 0;
+
 function generateId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < 16; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
+  _idCounter++;
+  const part1 = Date.now().toString(36);
+  const part2 = _idCounter.toString(36).padStart(4, '0');
+  const part3 = Math.random().toString(36).slice(2);
+  return (part1 + part2 + part3).slice(0, 16);
 }
 
 function safeStringify(value: unknown): string {
   try {
     return JSON.stringify(value);
   } catch (e) {
-    return "[]";
+    return "null";
   }
 }
 
@@ -68,32 +69,32 @@ function serializeNode(node: SceneNode): NodeSnapshot {
     name: node.name,
     type: node.type,
     visible: node.visible,
-    locked: false,
+    locked: 'locked' in n ? n.locked : false,
     x: round2(node.x),
     y: round2(node.y),
     width: round2(node.width),
     height: round2(node.height),
     rotation: "rotation" in n ? round2(n.rotation) : 0,
     opacity: "opacity" in n ? n.opacity : 1,
-    blendMode: "PASS_THROUGH",
-    isMask: false,
+    blendMode: 'blendMode' in n ? n.blendMode : 'PASS_THROUGH',
+    isMask: 'isMask' in n ? n.isMask : false,
     fills: extractFills(node),
     strokes: extractStrokes(node),
     effects: extractEffects(node),
     strokeWeight: "strokeWeight" in n ? safeMixed(n.strokeWeight) : "0",
-    strokeAlign: "",
-    strokeCap: "",
-    strokeJoin: "",
-    dashPattern: "[]",
+    strokeAlign: 'strokeAlign' in n ? n.strokeAlign : '',
+    strokeCap: 'strokeCap' in n ? safeMixed(n.strokeCap) : '',
+    strokeJoin: 'strokeJoin' in n ? n.strokeJoin : '',
+    dashPattern: 'dashPattern' in n ? safeStringify(n.dashPattern) : '[]',
     cornerRadius: extractCornerRadius(node),
-    cornerSmoothing: 0,
+    cornerSmoothing: 'cornerSmoothing' in n ? n.cornerSmoothing : 0,
   };
 
   // Text-specific properties
   if (node.type === "TEXT") {
     const t = node as TextNode;
     const chars = t.characters;
-    snap.characters = chars.length > 500 ? chars.substring(0, 500) + "…" : chars;
+    snap.characters = chars.length > 500 ? [...chars].slice(0, 500).join('') + "…" : chars;
     snap.fontSize = t.fontSize === figma.mixed ? "mixed" : t.fontSize;
 
     const fontName = t.fontName;
@@ -138,30 +139,27 @@ function serializeNode(node: SceneNode): NodeSnapshot {
 
 const MAX_NODES = 5000;
 
-function countDescendants(node: SceneNode): number {
-  let count = 1;
-  if ("children" in node) {
-    for (const child of (node as ChildrenMixin & SceneNode).children) {
-      count += countDescendants(child as SceneNode);
-    }
-  }
-  return count;
-}
-
 function walkTree(
   node: SceneNode,
   nodes: Record<string, NodeSnapshot>,
-  limit: number
-): void {
-  if (Object.keys(nodes).length >= limit) return;
-  nodes[node.id] = serializeNode(node);
+  limit: number,
+  counter: { count: number }
+): boolean {
+  if (counter.count >= limit) return true;
+  try {
+    nodes[node.id] = serializeNode(node);
+    counter.count++;
+  } catch (e) {
+    console.warn(`Failed to serialize node ${node.id} (${node.name}):`, e);
+    return false;
+  }
 
   if ("children" in node) {
     for (const child of (node as ChildrenMixin & SceneNode).children) {
-      if (Object.keys(nodes).length >= limit) return;
-      walkTree(child as SceneNode, nodes, limit);
+      if (walkTree(child as SceneNode, nodes, limit, counter)) return true;
     }
   }
+  return false;
 }
 
 export interface CaptureResult {
@@ -172,15 +170,15 @@ export interface CaptureResult {
 
 export async function captureThumbnail(node: SceneNode): Promise<string | null> {
   try {
-    var maxDim = Math.max(node.width, node.height);
-    var scale = maxDim > 512 ? 512 / maxDim : 1;
+    const maxDim = Math.max(node.width, node.height);
+    const scale = maxDim > 512 ? 512 / maxDim : 1;
 
-    var bytes = await (node as any).exportAsync({
+    const bytes = await (node as any).exportAsync({
       format: "PNG",
       constraint: { type: "SCALE", value: scale },
     });
 
-    var base64 = figma.base64Encode(bytes);
+    const base64 = figma.base64Encode(bytes);
     return "data:image/png;base64," + base64;
   } catch (e) {
     console.warn("Thumbnail capture failed:", e);
@@ -189,19 +187,17 @@ export async function captureThumbnail(node: SceneNode): Promise<string | null> 
 }
 
 export function captureSnapshot(node: SceneNode, label: string): CaptureResult {
-  // Pre-check node count
-  const totalNodes = countDescendants(node);
+  const nodes: Record<string, NodeSnapshot> = {};
+  const counter = { count: 0 };
+  const hitLimit = walkTree(node, nodes, MAX_NODES, counter);
 
-  if (totalNodes > MAX_NODES) {
+  if (hitLimit) {
     return {
       snapshot: null,
       warning: null,
-      error: `This selection has ${totalNodes.toLocaleString()} nodes — too large to capture. Maximum is ${MAX_NODES.toLocaleString()} nodes. Try selecting a smaller frame or component.`,
+      error: `This selection has more than ${MAX_NODES.toLocaleString()} nodes — too large to capture. Try selecting a smaller frame or component.`,
     };
   }
-
-  const nodes: Record<string, NodeSnapshot> = {};
-  walkTree(node, nodes, MAX_NODES);
 
   const snapshot: Snapshot = {
     id: generateId(),
@@ -209,7 +205,7 @@ export function captureSnapshot(node: SceneNode, label: string): CaptureResult {
     timestamp: Date.now(),
     rootNodeId: node.id,
     rootNodeName: node.name,
-    nodeCount: Object.keys(nodes).length,
+    nodeCount: counter.count,
     nodes,
   };
 

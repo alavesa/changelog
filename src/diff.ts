@@ -56,10 +56,10 @@ function valueToString(value: unknown): string {
   if (typeof value === "number") return String(value);
   if (typeof value === "boolean") return String(value);
   if (Array.isArray(value)) return JSON.stringify(value);
-  return String(value);
+  return JSON.stringify(value);
 }
 
-const NUMERIC_PROPS = new Set(["x", "y", "width", "height", "rotation", "opacity", "itemSpacing", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "cornerRadius", "strokeWeight", "fontSize", "fontWeight"]);
+const NUMERIC_PROPS = new Set(["x", "y", "width", "height", "rotation", "opacity", "itemSpacing", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "cornerRadius", "strokeWeight", "fontSize"]);
 
 function compareNodes(
   oldNode: NodeSnapshot,
@@ -68,8 +68,8 @@ function compareNodes(
   const changes: PropertyChange[] = [];
 
   for (const prop of COMPARED_PROPERTIES) {
-    const oldVal = valueToString((oldNode as any)[prop]);
-    const newVal = valueToString((newNode as any)[prop]);
+    const oldVal = valueToString((oldNode as Record<string, unknown>)[prop]);
+    const newVal = valueToString((newNode as Record<string, unknown>)[prop]);
 
     if (oldVal !== newVal) {
       // Skip sub-pixel noise for numeric properties
@@ -100,6 +100,9 @@ export function compareSnapshots(
   const entries: ChangeEntry[] = [];
   const oldIds = new Set(Object.keys(oldSnap.nodes));
   const newIds = new Set(Object.keys(newSnap.nodes));
+  let added = 0;
+  let removed = 0;
+  let modified = 0;
 
   // Added nodes: in new but not in old
   for (const id of newIds) {
@@ -112,6 +115,7 @@ export function compareSnapshots(
         category: "added",
         changes: [],
       });
+      added++;
     }
   }
 
@@ -126,6 +130,7 @@ export function compareSnapshots(
         category: "removed",
         changes: [],
       });
+      removed++;
     }
   }
 
@@ -142,15 +147,12 @@ export function compareSnapshots(
           category: "modified",
           changes,
         });
+        modified++;
       }
     }
   }
 
-  const summary = {
-    added: entries.filter((e) => e.category === "added").length,
-    removed: entries.filter((e) => e.category === "removed").length,
-    modified: entries.filter((e) => e.category === "modified").length,
-  };
+  const summary = { added, removed, modified };
 
   return {
     fromSnapshot: {
@@ -170,8 +172,8 @@ export function compareSnapshots(
 
 export function changelogToMarkdown(changelog: Changelog): string {
   const lines: string[] = [];
-  const fromDate = new Date(changelog.fromSnapshot.timestamp).toLocaleString();
-  const toDate = new Date(changelog.toSnapshot.timestamp).toLocaleString();
+  const fromDate = new Date(changelog.fromSnapshot.timestamp).toISOString();
+  const toDate = new Date(changelog.toSnapshot.timestamp).toISOString();
 
   lines.push(`# Design Changelog`);
   lines.push(``);
@@ -188,11 +190,19 @@ export function changelogToMarkdown(changelog: Changelog): string {
   );
   lines.push(``);
 
+  const grouped = new Map<string, ChangeEntry[]>();
+  for (const entry of changelog.entries) {
+    const list = grouped.get(entry.category) ?? [];
+    list.push(entry);
+    grouped.set(entry.category, list);
+  }
+  const addedEntries = grouped.get("added") ?? [];
+  const removedEntries = grouped.get("removed") ?? [];
+  const modifiedEntries = grouped.get("modified") ?? [];
+
   if (changelog.summary.added > 0) {
     lines.push(`## Added`);
-    for (const entry of changelog.entries.filter(
-      (e) => e.category === "added"
-    )) {
+    for (const entry of addedEntries) {
       lines.push(`- **${entry.nodeName}** (${entry.nodeType})`);
     }
     lines.push(``);
@@ -200,9 +210,7 @@ export function changelogToMarkdown(changelog: Changelog): string {
 
   if (changelog.summary.removed > 0) {
     lines.push(`## Removed`);
-    for (const entry of changelog.entries.filter(
-      (e) => e.category === "removed"
-    )) {
+    for (const entry of removedEntries) {
       lines.push(`- **${entry.nodeName}** (${entry.nodeType})`);
     }
     lines.push(``);
@@ -210,13 +218,13 @@ export function changelogToMarkdown(changelog: Changelog): string {
 
   if (changelog.summary.modified > 0) {
     lines.push(`## Modified`);
-    for (const entry of changelog.entries.filter(
-      (e) => e.category === "modified"
-    )) {
+    for (const entry of modifiedEntries) {
       lines.push(`### ${entry.nodeName} (${entry.nodeType})`);
       for (const change of entry.changes) {
+        const safeOld = change.oldValue.replace(/`/g, "\\`");
+        const safeNew = change.newValue.replace(/`/g, "\\`");
         lines.push(
-          `- **${change.property}** [${change.group}]: \`${change.oldValue}\` → \`${change.newValue}\``
+          `- **${change.property}** [${change.group}]: \`${safeOld}\` → \`${safeNew}\``
         );
       }
       lines.push(``);
@@ -258,12 +266,16 @@ export function changelogToCSV(changelog: Changelog): string {
       }
     }
   }
-  return rows.join("\n");
+  return rows.join("\r\n");
 }
 
 function csvRow(fields: string[]): string {
   return fields.map((f) => {
-    const s = String(f).replace(/"/g, '""');
+    let s = String(f);
+    if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")) {
+      s = "'" + s;
+    }
+    s = s.replace(/"/g, '""');
     return s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1 ? `"${s}"` : s;
   }).join(",");
 }

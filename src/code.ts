@@ -4,7 +4,26 @@ import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot, saveReview, lo
 
 figma.showUI(__html__, { width: 360, height: 520, themeColors: true });
 
-async function handleMessage(msg: { type: string; [key: string]: any }) {
+// Discriminated union for all incoming plugin messages
+type PluginMessage =
+  | { type: "capture-snapshot"; label?: string; annotation?: string }
+  | { type: "list-snapshots" }
+  | { type: "compare-snapshots"; fromId: string; toId: string }
+  | { type: "delete-snapshot"; id: string }
+  | { type: "highlight-node"; nodeId: string }
+  | { type: "node-timeline"; nodeId: string; nodeName: string }
+  | { type: "export-changelog" }
+  | { type: "export-json" }
+  | { type: "export-csv" }
+  | { type: "save-review"; key: string; data: any }
+  | { type: "load-review"; key: string }
+  | { type: "clear-all-data" };
+
+// Cache the last computed changelog in the plugin sandbox so export handlers
+// use plugin-owned data instead of UI-supplied data.
+let lastChangelog: ReturnType<typeof compareSnapshots> | null = null;
+
+async function handleMessage(msg: PluginMessage) {
   switch (msg.type) {
     case "capture-snapshot": {
       const selection = figma.currentPage.selection;
@@ -62,6 +81,11 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "compare-snapshots": {
+      if (!msg.fromId || !msg.toId) {
+        figma.ui.postMessage({ type: "error", message: "Invalid snapshot IDs." });
+        return;
+      }
+
       const oldSnap = getSnapshot(msg.fromId);
       const newSnap = getSnapshot(msg.toId);
 
@@ -74,6 +98,7 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
       }
 
       const changelog = compareSnapshots(oldSnap, newSnap);
+      lastChangelog = changelog;
       const fromThumbnail = getThumbnail(msg.fromId);
       const toThumbnail = getThumbnail(msg.toId);
       figma.ui.postMessage({ type: "changelog-result", changelog, fromThumbnail, toThumbnail });
@@ -81,7 +106,15 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "delete-snapshot": {
-      deleteSnapshot(msg.id);
+      if (!msg.id) {
+        figma.ui.postMessage({ type: "error", message: "Invalid snapshot ID." });
+        return;
+      }
+      const result = deleteSnapshot(msg.id);
+      if (!result.ok) {
+        figma.ui.postMessage({ type: "error", message: result.message });
+        return;
+      }
       const list = getSnapshots();
       figma.ui.postMessage({
         type: "snapshot-list",
@@ -95,8 +128,25 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "highlight-node": {
+      if (!msg.nodeId) {
+        figma.ui.postMessage({ type: "error", message: "Invalid node ID." });
+        return;
+      }
       const node = await figma.getNodeByIdAsync(msg.nodeId);
       if (node && "type" in node && node.type !== "DOCUMENT" && node.type !== "PAGE") {
+        // Verify the node belongs to the current page to avoid a runtime crash
+        // when assigning cross-page nodes to currentPage.selection.
+        let parent = node.parent;
+        while (parent && parent.type !== "PAGE") {
+          parent = parent.parent;
+        }
+        if (!parent || parent.id !== figma.currentPage.id) {
+          figma.ui.postMessage({
+            type: "error",
+            message: "Node not found in current document.",
+          });
+          return;
+        }
         figma.currentPage.selection = [node as SceneNode];
         figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
       } else {
@@ -109,6 +159,10 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "node-timeline": {
+      if (!msg.nodeId) {
+        figma.ui.postMessage({ type: "error", message: "Invalid node ID." });
+        return;
+      }
       const index = getSnapshots();
       const timeline: Array<{
         snapshotId: string;
@@ -141,29 +195,54 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     }
 
     case "export-changelog": {
-      const markdown = changelogToMarkdown(msg.changelog);
+      if (!lastChangelog) {
+        figma.ui.postMessage({ type: "error", message: "No changelog available to export." });
+        return;
+      }
+      const markdown = changelogToMarkdown(lastChangelog);
       figma.ui.postMessage({ type: "export-markdown", markdown });
       break;
     }
 
     case "export-json": {
-      const json = changelogToJSON(msg.changelog);
+      if (!lastChangelog) {
+        figma.ui.postMessage({ type: "error", message: "No changelog available to export." });
+        return;
+      }
+      const json = changelogToJSON(lastChangelog);
       figma.ui.postMessage({ type: "export-data", data: json, format: "JSON" });
       break;
     }
 
     case "export-csv": {
-      const csv = changelogToCSV(msg.changelog);
+      if (!lastChangelog) {
+        figma.ui.postMessage({ type: "error", message: "No changelog available to export." });
+        return;
+      }
+      const csv = changelogToCSV(lastChangelog);
       figma.ui.postMessage({ type: "export-data", data: csv, format: "CSV" });
       break;
     }
 
     case "save-review": {
-      saveReview(msg.key, msg.data);
+      if (!msg.key) {
+        figma.ui.postMessage({ type: "error", message: "Invalid review key." });
+        return;
+      }
+      const result = saveReview(msg.key, msg.data);
+      if (result && !result.ok) {
+        figma.ui.postMessage({ type: "error", message: result.message });
+      } else {
+        figma.ui.postMessage({ type: "review-saved", message: "Review saved." });
+      }
       break;
     }
 
     case "load-review": {
+      if (!msg.key) {
+        figma.ui.postMessage({ type: "error", message: "Invalid review key." });
+        return;
+      }
       const data = loadReview(msg.key);
       figma.ui.postMessage({ type: "review-loaded", data });
       break;
@@ -172,11 +251,15 @@ async function handleMessage(msg: { type: string; [key: string]: any }) {
     case "clear-all-data": {
       // Remove all plugin data keys from the file
       const keys = figma.root.getPluginDataKeys();
-      for (const key of keys) {
-        figma.root.setPluginData(key, "");
+      try {
+        for (const key of keys) {
+          figma.root.setPluginData(key, "");
+        }
+        figma.ui.postMessage({ type: "snapshot-list", snapshots: [] });
+        figma.ui.postMessage({ type: "data-cleared", message: "All plugin data cleared. You can start fresh." });
+      } catch (e) {
+        figma.ui.postMessage({ type: "error", message: "Failed to clear some data." });
       }
-      figma.ui.postMessage({ type: "snapshot-list", snapshots: [] });
-      figma.ui.postMessage({ type: "data-cleared", message: "All plugin data cleared. You can start fresh." });
       break;
     }
   }
@@ -203,7 +286,11 @@ function sendSelectionInfo() {
   }
 }
 
-figma.on("selectionchange", sendSelectionInfo);
+let selectionTimer: ReturnType<typeof setTimeout> | null = null;
+figma.on("selectionchange", () => {
+  if (selectionTimer) clearTimeout(selectionTimer);
+  selectionTimer = setTimeout(sendSelectionInfo, 50);
+});
 
 // Send initial selection state
 sendSelectionInfo();

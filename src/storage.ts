@@ -7,6 +7,7 @@ const INDEX_KEY = "changelog_index";
 const SNAP_PREFIX = "changelog_snap_";
 const CHUNK_PREFIX = "changelog_chunk_";
 const THUMB_PREFIX = "changelog_thumb_";
+const REVIEW_PREFIX = "changelog_review_";
 const MAX_SNAPSHOTS = 20;
 const CHUNK_SIZE = 50; // nodes per chunk
 
@@ -93,15 +94,19 @@ export function saveSnapshot(snapshot: Snapshot): { ok: boolean; message: string
       nodeCount: snapshot.nodeCount,
     };
 
-    index.push(meta);
-    saveIndex(index);
+    const newIndex = [...index, meta];
+    saveIndex(newIndex);
 
     return { ok: true, message: `Snapshot "${snapshot.label}" saved (${snapshot.nodeCount} nodes).` };
   } catch (e) {
     console.error("saveSnapshot error:", e);
     // Clean up any partial chunks on failure
-    cleanupChunks(snapshot.id);
-    deleteData(SNAP_PREFIX + snapshot.id);
+    try {
+      cleanupChunks(snapshot.id);
+      deleteData(SNAP_PREFIX + snapshot.id);
+    } catch (cleanupErr) {
+      console.error("cleanup failed:", cleanupErr);
+    }
 
     const errMsg = String(e);
     if (errMsg.includes("size") || errMsg.includes("quota") || errMsg.includes("large") || errMsg.includes("exceed")) {
@@ -133,6 +138,9 @@ export function getSnapshot(id: string): Snapshot | null {
     const chunk = getData(CHUNK_PREFIX + id + "_" + i);
     if (chunk) {
       Object.assign(nodes, chunk);
+    } else {
+      console.error(`getSnapshot: missing or corrupt chunk ${i} for snapshot ${id}`);
+      return null;
     }
   }
 
@@ -148,13 +156,20 @@ export function getSnapshot(id: string): Snapshot | null {
   };
 }
 
-function cleanupChunks(id: string): void {
-  // Remove all chunk keys for a snapshot
-  for (let i = 0; i < 200; i++) {
-    const key = CHUNK_PREFIX + id + "_" + i;
-    const raw = figma.root.getPluginData(key);
-    if (!raw) break;
-    deleteData(key);
+function cleanupChunks(id: string, chunkCount?: number): void {
+  if (typeof chunkCount === 'number') {
+    // Known chunk count: delete exactly those chunks
+    for (let i = 0; i < chunkCount; i++) {
+      deleteData(CHUNK_PREFIX + id + "_" + i);
+    }
+  } else {
+    // Bounded scan fallback during error recovery
+    for (let i = 0; i < 200; i++) {
+      const key = CHUNK_PREFIX + id + "_" + i;
+      const raw = figma.root.getPluginData(key);
+      if (!raw) break;
+      deleteData(key);
+    }
   }
 }
 
@@ -169,21 +184,13 @@ export function saveThumbnail(snapshotId: string, base64: string): boolean {
 }
 
 export function getThumbnail(snapshotId: string): string | null {
-  try {
-    const raw = figma.root.getPluginData(THUMB_PREFIX + snapshotId);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (e) {
-    return null;
-  }
+  return getData(THUMB_PREFIX + snapshotId) as string | null;
 }
 
 export function deleteSnapshot(id: string): void {
   const header = getData(SNAP_PREFIX + id);
-  if (header && header.chunkCount) {
-    for (let i = 0; i < header.chunkCount; i++) {
-      deleteData(CHUNK_PREFIX + id + "_" + i);
-    }
+  if (header && typeof header.chunkCount === 'number' && header.chunkCount > 0) {
+    cleanupChunks(id, header.chunkCount);
   }
   deleteData(SNAP_PREFIX + id);
   deleteData(THUMB_PREFIX + id);
@@ -196,12 +203,12 @@ export function deleteSnapshot(id: string): void {
 // Review data — also stored in the file
 export function saveReview(key: string, data: any): void {
   try {
-    setData(key, data);
+    setData(REVIEW_PREFIX + key, data);
   } catch (e) {
     console.error("saveReview error:", e);
   }
 }
 
 export function loadReview(key: string): any {
-  return getData(key) || {};
+  return getData(REVIEW_PREFIX + key) || {};
 }
