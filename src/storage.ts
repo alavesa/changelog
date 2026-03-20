@@ -187,17 +187,23 @@ export function getThumbnail(snapshotId: string): string | null {
   return getData(THUMB_PREFIX + snapshotId) as string | null;
 }
 
-export function deleteSnapshot(id: string): void {
-  const header = getData(SNAP_PREFIX + id);
-  if (header && typeof header.chunkCount === 'number' && header.chunkCount > 0) {
-    cleanupChunks(id, header.chunkCount);
-  }
-  deleteData(SNAP_PREFIX + id);
-  deleteData(THUMB_PREFIX + id);
+export function deleteSnapshot(id: string): { ok: boolean; message: string } {
+  try {
+    const header = getData(SNAP_PREFIX + id);
+    if (header && typeof header.chunkCount === 'number' && header.chunkCount > 0) {
+      cleanupChunks(id, header.chunkCount);
+    }
+    deleteData(SNAP_PREFIX + id);
+    deleteData(THUMB_PREFIX + id);
 
-  const index = getIndex();
-  const filtered = index.filter((m) => m.id !== id);
-  saveIndex(filtered);
+    const index = getIndex();
+    const filtered = index.filter((m) => m.id !== id);
+    saveIndex(filtered);
+    return { ok: true, message: "Snapshot deleted." };
+  } catch (e) {
+    console.error("deleteSnapshot error:", e);
+    return { ok: false, message: `Failed to delete snapshot: ${e}` };
+  }
 }
 
 // Review data — also stored in the file
