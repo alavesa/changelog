@@ -184,7 +184,8 @@ export function saveThumbnail(snapshotId: string, base64: string): boolean {
 }
 
 export function getThumbnail(snapshotId: string): string | null {
-  return getData(THUMB_PREFIX + snapshotId) as string | null;
+  const val = getData(THUMB_PREFIX + snapshotId);
+  return typeof val === 'string' ? val : null;
 }
 
 export function deleteSnapshot(id: string): { ok: boolean; message: string } {
@@ -207,11 +208,13 @@ export function deleteSnapshot(id: string): { ok: boolean; message: string } {
 }
 
 // Review data — also stored in the file
-export function saveReview(key: string, data: any): void {
+export function saveReview(key: string, data: any): { ok: boolean; message: string } {
   try {
     setData(REVIEW_PREFIX + key, data);
+    return { ok: true, message: "Review saved." };
   } catch (e) {
     console.error("saveReview error:", e);
+    return { ok: false, message: `Failed to save review: ${e}` };
   }
 }
 

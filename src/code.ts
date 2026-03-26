@@ -230,7 +230,7 @@ async function handleMessage(msg: PluginMessage) {
         return;
       }
       const result = saveReview(msg.key, msg.data);
-      if (result && !result.ok) {
+      if (!result.ok) {
         figma.ui.postMessage({ type: "error", message: result.message });
       } else {
         figma.ui.postMessage({ type: "review-saved", message: "Review saved." });
@@ -249,6 +249,7 @@ async function handleMessage(msg: PluginMessage) {
     }
 
     case "clear-all-data": {
+      lastChangelog = null;
       // Remove all plugin data keys from the file
       const keys = figma.root.getPluginDataKeys();
       try {

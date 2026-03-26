@@ -68,8 +68,8 @@ function compareNodes(
   const changes: PropertyChange[] = [];
 
   for (const prop of COMPARED_PROPERTIES) {
-    const oldVal = valueToString((oldNode as Record<string, unknown>)[prop]);
-    const newVal = valueToString((newNode as Record<string, unknown>)[prop]);
+    const oldVal = valueToString((oldNode as unknown as Record<string, unknown>)[prop]);
+    const newVal = valueToString((newNode as unknown as Record<string, unknown>)[prop]);
 
     if (oldVal !== newVal) {
       // Skip sub-pixel noise for numeric properties
@@ -170,6 +170,10 @@ export function compareSnapshots(
   };
 }
 
+function escapeMd(s: string): string {
+  return s.replace(/([*_#`\[\]()>\-+.!|\\])/g, '\\$1');
+}
+
 export function changelogToMarkdown(changelog: Changelog): string {
   const lines: string[] = [];
   const fromDate = new Date(changelog.fromSnapshot.timestamp).toISOString();
@@ -178,10 +182,10 @@ export function changelogToMarkdown(changelog: Changelog): string {
   lines.push(`# Design Changelog`);
   lines.push(``);
   lines.push(
-    `**From:** ${changelog.fromSnapshot.label} (${fromDate})`
+    `**From:** ${escapeMd(changelog.fromSnapshot.label)} (${fromDate})`
   );
   lines.push(
-    `**To:** ${changelog.toSnapshot.label} (${toDate})`
+    `**To:** ${escapeMd(changelog.toSnapshot.label)} (${toDate})`
   );
   lines.push(``);
   lines.push(`## Summary`);
@@ -203,7 +207,7 @@ export function changelogToMarkdown(changelog: Changelog): string {
   if (changelog.summary.added > 0) {
     lines.push(`## Added`);
     for (const entry of addedEntries) {
-      lines.push(`- **${entry.nodeName}** (${entry.nodeType})`);
+      lines.push(`- **${escapeMd(entry.nodeName)}** (${entry.nodeType})`);
     }
     lines.push(``);
   }
@@ -211,7 +215,7 @@ export function changelogToMarkdown(changelog: Changelog): string {
   if (changelog.summary.removed > 0) {
     lines.push(`## Removed`);
     for (const entry of removedEntries) {
-      lines.push(`- **${entry.nodeName}** (${entry.nodeType})`);
+      lines.push(`- **${escapeMd(entry.nodeName)}** (${entry.nodeType})`);
     }
     lines.push(``);
   }
@@ -219,7 +223,7 @@ export function changelogToMarkdown(changelog: Changelog): string {
   if (changelog.summary.modified > 0) {
     lines.push(`## Modified`);
     for (const entry of modifiedEntries) {
-      lines.push(`### ${entry.nodeName} (${entry.nodeType})`);
+      lines.push(`### ${escapeMd(entry.nodeName)} (${entry.nodeType})`);
       for (const change of entry.changes) {
         const safeOld = change.oldValue.replace(/`/g, "\\`");
         const safeNew = change.newValue.replace(/`/g, "\\`");
@@ -272,7 +276,7 @@ export function changelogToCSV(changelog: Changelog): string {
 function csvRow(fields: string[]): string {
   return fields.map((f) => {
     let s = String(f);
-    if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")) {
+    if (s.startsWith("=") || s.startsWith("+") || s.startsWith("@")) {
       s = "'" + s;
     }
     s = s.replace(/"/g, '""');
