@@ -149,20 +149,20 @@ manifest.json   # Figma plugin manifest
 - [x] Export to JSON/CSV for external tools and design system docs
 - [ ] Auto-snapshot on page change or interval
 
-### Publish to Figma Community
-- [ ] Fix critical bugs found by PatchPilots (return type mismatch, numeric threshold)
-- [ ] Apply all 14 patches from PatchPilots review
-- [ ] Create plugin icon (128x128px)
-- [ ] Create thumbnail image (1920x1080px)
-- [ ] Screenshot the capture → compare → changelog flow (up to 9 images)
-- [ ] Write listing description and tagline
-- [ ] Submit for Figma review (5-10 business days)
-
 ### Long-term
 - [ ] Component-level tracking — detect component swaps and detaches
 - [ ] Design token awareness — map raw fill/stroke values to variable/style names
 - [ ] Team changelog — aggregate changelogs across multiple pages/files
 - [ ] Slack/webhook integration — post changelogs to a channel automatically
+
+### Publish to Figma Community
+- [x] Fix critical bugs found by PatchPilots (return type mismatch, unsafe casts)
+- [x] Apply patches from PatchPilots review (8 patches across 3 files)
+- [ ] Create plugin icon (128x128px)
+- [ ] Create thumbnail image (1920x1080px)
+- [ ] Screenshot the capture → compare → changelog flow (up to 9 images)
+- [ ] Write listing description and tagline
+- [ ] Submit for Figma review (5-10 business days)
 
 ## License
 
