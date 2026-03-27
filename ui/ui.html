@@ -1340,10 +1340,6 @@
         '<span class="toggle-arrow" id="arrow-' + eid + '">&#9654;</span> ' +
         grouped.length + ' changes &nbsp;' + groupSummary +
         '</div>';
-    } else {
-      summaryLine = '<div class="change-summary-static">' +
-        '<span class="badge-group badge-group-structure">structure</span>' +
-        '</div>';
       details = '<div class="change-details" id="details-' + eid + '">' + grouped.map(function(c) {
         return '<div class="prop-change">' +
           '<span class="badge-group badge-group-' + c.group + '">' + c.group + '</span>' +
@@ -1353,6 +1349,10 @@
           '<span class="prop-new prop-value" title="' + esc(c.newValue) + '">' + esc(truncate(c.newValue)) + '</span>' +
           '</div>';
       }).join('') + '</div>';
+    } else {
+      summaryLine = '<div class="change-summary-static">' +
+        '<span class="badge-group badge-group-structure">structure</span>' +
+        '</div>';
     }
 
     // Review controls
