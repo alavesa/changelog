@@ -1315,11 +1315,13 @@
     return grouped;
   }
 
-  // Count unique groups in changes
+  // Count unique groups in changes and return colored badge HTML
   function summarizeGroups(changes) {
     var groups = {};
     changes.forEach(function(c) { groups[c.group] = (groups[c.group] || 0) + 1; });
-    return Object.keys(groups).map(function(g) { return groups[g] + ' ' + g; }).join(', ');
+    return Object.keys(groups).map(function(g) {
+      return '<span class="badge-group badge-group-' + g + '">' + groups[g] + ' ' + g + '</span>';
+    }).join(' ');
   }
 
   var entryIdCounter = 0;
@@ -1335,7 +1337,7 @@
       var groupSummary = summarizeGroups(entry.changes);
       summaryLine = '<div class="change-summary" onclick="toggleDetails(\'' + eid + '\')">' +
         '<span class="toggle-arrow" id="arrow-' + eid + '">&#9654;</span> ' +
-        grouped.length + ' changes (' + groupSummary + ')' +
+        grouped.length + ' changes &nbsp;' + groupSummary +
         '</div>';
       details = '<div class="change-details" id="details-' + eid + '">' + grouped.map(function(c) {
         return '<div class="prop-change">' +
