@@ -250,6 +250,7 @@
     user-select: none;
   }
   .change-summary:hover { color: #aaa; }
+  .change-summary-static { margin-top: 4px; }
   .change-summary .toggle-arrow { display: inline-block; transition: transform 0.15s; margin-right: 4px; }
   .change-summary .toggle-arrow.open { transform: rotate(90deg); }
   .change-details {
@@ -1338,6 +1339,10 @@
       summaryLine = '<div class="change-summary" onclick="toggleDetails(\'' + eid + '\')">' +
         '<span class="toggle-arrow" id="arrow-' + eid + '">&#9654;</span> ' +
         grouped.length + ' changes &nbsp;' + groupSummary +
+        '</div>';
+    } else {
+      summaryLine = '<div class="change-summary-static">' +
+        '<span class="badge-group badge-group-structure">structure</span>' +
         '</div>';
       details = '<div class="change-details" id="details-' + eid + '">' + grouped.map(function(c) {
         return '<div class="prop-change">' +
