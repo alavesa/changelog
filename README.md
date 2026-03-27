@@ -147,7 +147,7 @@ manifest.json   # Figma plugin manifest
 - [x] Visual side-by-side preview — capture thumbnail exports at snapshot time, show before/after images
 - [ ] Compare across different root nodes — match by node name/structure instead of ID
 - [x] Export to JSON/CSV for external tools and design system docs
-- [ ] Auto-snapshot on page change or interval
+- [ ] Auto-snapshot on page change or interval *(deferred to v2 — storage limits make this tricky)*
 
 ### Long-term
 - [ ] Component-level tracking — detect component swaps and detaches
