@@ -8,7 +8,7 @@
   body {
     font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 12px;
-    background: #2c2c2c;
+    background: #1e293b;
     color: #e0e0e0;
     overflow-x: hidden;
   }
@@ -16,8 +16,8 @@
   /* Tabs */
   .tabs {
     display: flex;
-    border-bottom: 1px solid #444;
-    background: #333;
+    border-bottom: 1px solid #334155;
+    background: #1e293b;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -33,7 +33,7 @@
     transition: color 0.15s, border-color 0.15s;
   }
   .tab:hover { color: #ccc; }
-  .tab.active { color: #e0e0e0; border-bottom-color: #7B61FF; }
+  .tab.active { color: #e0e0e0; border-bottom-color: #60a5fa; }
 
   .tab-content { display: none; padding: 16px; }
   .tab-content.active { display: block; }
@@ -42,15 +42,15 @@
   input[type="text"], select {
     width: 100%;
     padding: 8px 10px;
-    background: #1e1e1e;
-    border: 1px solid #555;
+    background: #0f172a;
+    border: 1px solid #475569;
     border-radius: 4px;
     color: #e0e0e0;
     font-size: 12px;
     outline: none;
   }
   input[type="text"]:focus, select:focus {
-    border-color: #7B61FF;
+    border-color: #60a5fa;
   }
 
   label {
@@ -68,8 +68,8 @@
   textarea {
     width: 100%;
     padding: 8px 10px;
-    background: #1e1e1e;
-    border: 1px solid #555;
+    background: #0f172a;
+    border: 1px solid #475569;
     border-radius: 4px;
     color: #e0e0e0;
     font-size: 12px;
@@ -78,7 +78,7 @@
     resize: vertical;
     min-height: 48px;
   }
-  textarea:focus { border-color: #7B61FF; }
+  textarea:focus { border-color: #60a5fa; }
   textarea::placeholder { color: #777; }
 
   .snapshot-annotation {
@@ -93,7 +93,7 @@
 
   button {
     padding: 8px 16px;
-    background: #7B61FF;
+    background: #60a5fa;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -104,13 +104,13 @@
     transition: background 0.15s;
   }
   button:hover { background: #6B51EF; }
-  button:disabled { background: #555; cursor: not-allowed; color: #888; }
+  button:disabled { background: #475569; cursor: not-allowed; color: #94a3b8; }
 
   button.secondary {
-    background: #444;
+    background: #334155;
     color: #ddd;
   }
-  button.secondary:hover { background: #555; }
+  button.secondary:hover { background: #475569; }
 
   button.danger {
     background: transparent;
@@ -147,7 +147,7 @@
   }
   .snapshot-meta {
     font-size: 10px;
-    color: #888;
+    color: #94a3b8;
     margin-top: 2px;
   }
 
@@ -180,7 +180,7 @@
     letter-spacing: 0.5px;
     margin-bottom: 8px;
     padding-bottom: 4px;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid #334155;
   }
 
   .change-entry {
@@ -221,7 +221,7 @@
     border-radius: 3px;
     font-size: 9px;
     font-weight: 500;
-    background: #444;
+    background: #334155;
     color: #aaa;
   }
 
@@ -230,14 +230,14 @@
     color: #e0e0e0;
   }
   .change-node-type {
-    color: #888;
+    color: #94a3b8;
     font-size: 10px;
   }
 
   .change-summary {
     margin-top: 4px;
     font-size: 10px;
-    color: #888;
+    color: #94a3b8;
     cursor: pointer;
     user-select: none;
   }
@@ -276,7 +276,7 @@
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: #2c2c2c;
+    background: #1e293b;
     z-index: 50;
     overflow-y: auto;
     padding: 16px;
@@ -296,12 +296,12 @@
   }
   .timeline-subtitle {
     font-size: 11px;
-    color: #888;
+    color: #94a3b8;
     margin-top: 2px;
   }
   .btn-back {
     padding: 4px 10px;
-    background: #444;
+    background: #334155;
     color: #ddd;
     border: none;
     border-radius: 4px;
@@ -309,7 +309,7 @@
     font-size: 11px;
     width: auto;
   }
-  .btn-back:hover { background: #555; }
+  .btn-back:hover { background: #475569; }
 
   .timeline-step {
     position: relative;
@@ -325,7 +325,7 @@
     top: 0;
     bottom: 0;
     width: 2px;
-    background: #555;
+    background: #475569;
   }
   .timeline-step:first-child::before { top: 50%; }
   .timeline-step:last-child::before { bottom: 50%; }
@@ -339,8 +339,8 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #7B61FF;
-    border: 2px solid #2c2c2c;
+    background: #60a5fa;
+    border: 2px solid #1e293b;
     z-index: 1;
   }
   .timeline-step-label {
@@ -350,7 +350,7 @@
   }
   .timeline-step-date {
     font-size: 10px;
-    color: #888;
+    color: #94a3b8;
     margin-top: 2px;
   }
   .timeline-step-changes {
@@ -366,7 +366,7 @@
   .timeline-prop .prop-old { color: #F44336; text-decoration: line-through; }
   .timeline-no-change {
     font-size: 11px;
-    color: #666;
+    color: #64748b;
     font-style: italic;
   }
 
@@ -388,14 +388,14 @@
     font-size: 10px;
     font-weight: 600;
     cursor: pointer;
-    border: 1px solid #555;
+    border: 1px solid #475569;
     background: transparent;
     color: #999;
     width: auto;
     transition: background 0.1s, color 0.1s, border-color 0.1s;
   }
-  .filter-chip:hover { border-color: #888; color: #ccc; background: transparent; }
-  .filter-chip.active { border-color: #7B61FF; color: #7B61FF; background: rgba(123, 97, 255, 0.1); }
+  .filter-chip:hover { border-color: #94a3b8; color: #ccc; background: transparent; }
+  .filter-chip.active { border-color: #60a5fa; color: #60a5fa; background: rgba(96, 165, 250, 0.1); }
   .filter-chip.active:hover { background: rgba(123, 97, 255, 0.15); }
 
   /* Toast */
@@ -404,11 +404,11 @@
     bottom: 16px;
     left: 16px;
     right: 16px;
-    background: #1e1e1e;
+    background: #0f172a;
     color: #e0e0e0;
     padding: 10px 14px;
     border-radius: 4px;
-    border: 1px solid #555;
+    border: 1px solid #475569;
     font-size: 12px;
     z-index: 100;
     opacity: 0;
@@ -424,7 +424,7 @@
 
   .empty-state {
     text-align: center;
-    color: #888;
+    color: #94a3b8;
     padding: 24px 16px;
     font-size: 12px;
   }
@@ -451,7 +451,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #7B61FF;
+    background: #60a5fa;
     color: #fff;
     font-size: 10px;
     font-weight: 700;
@@ -466,21 +466,21 @@
     gap: 6px;
     padding: 6px 10px;
     margin-bottom: 12px;
-    background: #1e1e1e;
+    background: #0f172a;
     border-radius: 4px;
-    border: 1px solid #444;
+    border: 1px solid #334155;
     font-size: 11px;
-    color: #888;
+    color: #94a3b8;
   }
   .selection-bar .sel-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #555;
+    background: #475569;
     flex-shrink: 0;
   }
   .selection-bar.has-selection .sel-dot { background: #4CAF50; }
-  .selection-bar.has-selection { color: #ccc; border-color: #555; }
+  .selection-bar.has-selection { color: #ccc; border-color: #475569; }
 
   /* Quick compare */
   .quick-compare {
@@ -492,7 +492,7 @@
   }
   .quick-compare .qc-label {
     font-size: 11px;
-    color: #888;
+    color: #94a3b8;
     margin-bottom: 8px;
   }
   .quick-compare .qc-desc {
@@ -523,7 +523,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .comparison-header .comp-arrow { color: #7B61FF; font-weight: 700; }
+  .comparison-header .comp-arrow { color: #60a5fa; font-weight: 700; }
 
   /* Workflow steps (horizontal) */
   .workflow-steps {
@@ -533,14 +533,14 @@
     gap: 4px;
     padding: 8px 16px 0;
     font-size: 10px;
-    color: #666;
+    color: #64748b;
   }
   .workflow-step {
     display: flex;
     align-items: center;
     gap: 3px;
   }
-  .workflow-step.active { color: #7B61FF; }
+  .workflow-step.active { color: #60a5fa; }
   .workflow-step.done { color: #4CAF50; }
   .workflow-step .ws-num {
     width: 14px;
@@ -554,8 +554,8 @@
     font-weight: 700;
   }
   .workflow-step.done .ws-num { background: #4CAF50; border-color: #4CAF50; color: #fff; }
-  .workflow-step.active .ws-num { background: #7B61FF; border-color: #7B61FF; color: #fff; }
-  .workflow-divider { color: #555; font-size: 10px; }
+  .workflow-step.active .ws-num { background: #60a5fa; border-color: #60a5fa; color: #fff; }
+  .workflow-divider { color: #475569; font-size: 10px; }
 
   /* Smart summary */
   .change-nlp {
@@ -572,18 +572,18 @@
     gap: 8px;
     margin-bottom: 12px;
     padding: 8px 10px;
-    background: #1e1e1e;
+    background: #0f172a;
     border-radius: 4px;
-    border: 1px solid #444;
+    border: 1px solid #334155;
   }
   .review-bar .review-stat {
     font-size: 11px;
-    color: #888;
+    color: #94a3b8;
   }
   .review-bar .review-stat span { font-weight: 600; }
   .review-bar .review-stat.approved span { color: #4CAF50; }
   .review-bar .review-stat.flagged span { color: #FF9800; }
-  .review-bar .review-stat.pending span { color: #888; }
+  .review-bar .review-stat.pending span { color: #94a3b8; }
 
   .review-actions {
     display: flex;
@@ -596,27 +596,27 @@
     font-size: 10px;
     border-radius: 3px;
     cursor: pointer;
-    border: 1px solid #555;
+    border: 1px solid #475569;
     background: transparent;
     color: #999;
     width: auto;
     font-weight: 500;
   }
-  .review-btn:hover { border-color: #888; color: #ccc; }
+  .review-btn:hover { border-color: #94a3b8; color: #ccc; }
   .review-btn.active-approve { border-color: #4CAF50; color: #4CAF50; background: rgba(76,175,80,0.1); }
   .review-btn.active-flag { border-color: #FF9800; color: #FF9800; background: rgba(255,152,0,0.1); }
   .review-comment-input {
     flex: 1;
     padding: 3px 6px;
     font-size: 10px;
-    background: #1e1e1e;
-    border: 1px solid #555;
+    background: #0f172a;
+    border: 1px solid #475569;
     border-radius: 3px;
     color: #e0e0e0;
     outline: none;
     width: auto;
   }
-  .review-comment-input:focus { border-color: #7B61FF; }
+  .review-comment-input:focus { border-color: #60a5fa; }
   .review-comment-display {
     font-size: 10px;
     color: #aaa;
@@ -631,9 +631,9 @@
     gap: 8px;
     margin-bottom: 12px;
     padding: 10px;
-    background: #1e1e1e;
+    background: #0f172a;
     border-radius: 6px;
-    border: 1px solid #444;
+    border: 1px solid #334155;
   }
   .preview-pane {
     flex: 1;
@@ -644,12 +644,12 @@
     max-width: 100%;
     max-height: 200px;
     border-radius: 4px;
-    border: 1px solid #555;
-    background: #2c2c2c;
+    border: 1px solid #475569;
+    background: #1e293b;
   }
   .preview-label {
     font-size: 10px;
-    color: #888;
+    color: #94a3b8;
     margin-bottom: 4px;
     font-weight: 600;
     text-transform: uppercase;
@@ -660,10 +660,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #2c2c2c;
+    background: #1e293b;
     border-radius: 4px;
-    border: 1px dashed #555;
-    color: #666;
+    border: 1px dashed #475569;
+    color: #64748b;
     font-size: 11px;
   }
 </style>
@@ -699,7 +699,7 @@
     <textarea id="snapshot-annotation" rows="2" placeholder="e.g. Adjusted spacing after design review"></textarea>
   </div>
   <button id="btn-capture">Capture Snapshot</button>
-  <div id="limits-info" style="margin-top:8px;padding:8px 10px;background:#1e1e1e;border-radius:4px;font-size:10px;color:#777;line-height:1.5;">
+  <div id="limits-info" style="margin-top:8px;padding:8px 10px;background:#0f172a;border-radius:4px;font-size:10px;color:#94a3b8;line-height:1.5;">
     <strong style="color:#999;">0/20 snapshots</strong> · Up to 5,000 nodes per snapshot
   </div>
   <div class="snapshot-list" id="snapshot-list"></div>
@@ -713,7 +713,7 @@
     <div class="qc-desc" id="qc-desc"></div>
     <button id="btn-quick-compare">Compare Latest Changes</button>
   </div>
-  <div id="or-divider" style="font-size:10px;text-align:center;color:#666;margin-bottom:8px;display:none;">or pick specific snapshots</div>
+  <div id="or-divider" style="font-size:10px;text-align:center;color:#64748b;margin-bottom:8px;display:none;">or pick specific snapshots</div>
   <div class="field">
     <label>From (older)</label>
     <select id="select-from"><option value="">Loading...</option></select>
