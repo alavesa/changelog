@@ -2,7 +2,7 @@ import { captureSnapshot, captureThumbnail } from "./snapshot";
 import { compareSnapshots, changelogToMarkdown, changelogToJSON, changelogToCSV } from "./diff";
 import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot, saveReview, loadReview, saveThumbnail, getThumbnail } from "./storage";
 
-figma.showUI(__html__, { width: 360, height: 520, themeColors: true });
+figma.showUI(__html__, { width: 360, height: 520, themeColors: false });
 
 // Discriminated union for all incoming plugin messages
 type PluginMessage =
