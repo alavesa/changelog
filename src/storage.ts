@@ -139,8 +139,7 @@ export function getSnapshot(id: string): Snapshot | null {
     if (chunk) {
       Object.assign(nodes, chunk);
     } else {
-      console.error(`getSnapshot: missing or corrupt chunk ${i} for snapshot ${id}`);
-      return null;
+      console.warn(`getSnapshot: missing chunk ${i} for snapshot ${id}, skipping`);
     }
   }
 
