@@ -1,30 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <!-- Background -->
-  <rect width="128" height="128" rx="20" fill="#0d1b2e"/>
-
-  <!-- Back frame (older snapshot) -->
-  <rect x="22" y="30" width="60" height="50" rx="5" fill="none" stroke="#334155" stroke-width="3"/>
-  <!-- Corner markers on back frame -->
-  <line x1="22" y1="40" x2="22" y2="30" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-  <line x1="22" y1="30" x2="32" y2="30" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-  <line x1="72" y1="30" x2="82" y2="30" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-  <line x1="82" y1="30" x2="82" y2="40" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-
-  <!-- Front frame (newer snapshot) — offset, in blue -->
-  <rect x="36" y="44" width="60" height="50" rx="5" fill="#0d1b2e" stroke="#60a5fa" stroke-width="3"/>
-  <!-- Corner markers on front frame -->
-  <line x1="36" y1="54" x2="36" y2="44" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
-  <line x1="36" y1="44" x2="46" y2="44" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
-  <line x1="86" y1="44" x2="96" y2="44" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
-  <line x1="96" y1="44" x2="96" y2="54" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
-
-  <!-- Small content lines inside front frame (suggesting a design) -->
-  <line x1="48" y1="62" x2="84" y2="62" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="48" y1="70" x2="75" y2="70" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="48" y1="78" x2="80" y2="78" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"/>
-
-  <!-- Trail dots at bottom — suggesting history/changelog -->
-  <circle cx="44" cy="106" r="4" fill="#60a5fa"/>
-  <circle cx="60" cy="106" r="4" fill="#60a5fa" opacity="0.6"/>
-  <circle cx="76" cy="106" r="4" fill="#60a5fa" opacity="0.3"/>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_331_560)">
+<path d="M108 0H20C8.9543 0 0 8.9543 0 20V108C0 119.046 8.9543 128 20 128H108C119.046 128 128 119.046 128 108V20C128 8.9543 119.046 0 108 0Z" fill="url(#paint0_radial_331_560)"/>
+<path d="M82 30H32C29.2386 30 27 32.2386 27 35V75C27 77.7614 29.2386 80 32 80H82C84.7614 80 87 77.7614 87 75V35C87 32.2386 84.7614 30 82 30Z" stroke="#40526B" stroke-width="3"/>
+<path d="M27 40V30" stroke="#40526B" stroke-width="3" stroke-linecap="round"/>
+<path d="M27 30H37" stroke="#40526B" stroke-width="3" stroke-linecap="round"/>
+<path d="M77 30H87" stroke="#40526B" stroke-width="3" stroke-linecap="round"/>
+<path d="M87 30V40" stroke="#40526B" stroke-width="3" stroke-linecap="round"/>
+<path d="M96 44H46C43.2386 44 41 46.2386 41 49V89C41 91.7614 43.2386 94 46 94H96C98.7614 94 101 91.7614 101 89V49C101 46.2386 98.7614 44 96 44Z" fill="#0D1A2E" stroke="#60A5FA" stroke-width="3"/>
+<path d="M41 54V44" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
+<path d="M41 44H51" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
+<path d="M91 44H101" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
+<path d="M101 44V54" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
+<path d="M53 62H89" stroke="#2EDE70" stroke-opacity="0.9" stroke-width="3" stroke-linecap="round"/>
+<path d="M53 70H80" stroke="#FF4566" stroke-opacity="0.85" stroke-width="3" stroke-linecap="round"/>
+<path d="M53 78H85" stroke="#FFA626" stroke-opacity="0.85" stroke-width="3" stroke-linecap="round"/>
+<path d="M49 110C51.2091 110 53 108.209 53 106C53 103.791 51.2091 102 49 102C46.7909 102 45 103.791 45 106C45 108.209 46.7909 110 49 110Z" fill="#60A5FA"/>
+<path opacity="0.6" d="M65 110C67.2091 110 69 108.209 69 106C69 103.791 67.2091 102 65 102C62.7909 102 61 103.791 61 106C61 108.209 62.7909 110 65 110Z" fill="#60A5FA" fill-opacity="0.6"/>
+<path opacity="0.3" d="M81 110C83.2091 110 85 108.209 85 106C85 103.791 83.2091 102 81 102C78.7909 102 77 103.791 77 106C77 108.209 78.7909 110 81 110Z" fill="#60A5FA" fill-opacity="0.3"/>
+</g>
+<defs>
+<radialGradient id="paint0_radial_331_560" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="scale(128)">
+<stop stop-color="#172942"/>
+<stop offset="1" stop-color="#081221"/>
+</radialGradient>
+<clipPath id="clip0_331_560">
+<rect width="128" height="128" fill="white"/>
+</clipPath>
+</defs>
 </svg>
