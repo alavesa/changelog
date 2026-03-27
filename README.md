@@ -24,7 +24,8 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 ### Changelog & review
 - **Smart summaries** — plain-English descriptions: "Moved right by 10px. Font changed to Inter Bold."
 - **Collapsible details** — summary first, expand for property-level diffs
-- **Filter & search** — filter by change group (style, layout, typography) or search by node name
+- **Filter & search** — filter by change group (style, layout, typography, structure, naming) or search by node name — each category color-coded throughout the UI
+- **Color-coded group badges** — visible on every entry without expanding, matching filter chip colors
 - **Click to highlight** — jump to any changed node in your Figma file
 - **Snapshot timeline** — view how a single node evolved across multiple snapshots
 - **Design review mode** — approve, flag, or comment on each change. Export a structured review report.
@@ -35,6 +36,7 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 - **Shared with team** — all snapshots, changelogs, and reviews are saved to the Figma file, visible to everyone
 - **Deep property tracking** — ~30 key properties across layout, style, typography, structure, and naming
 - **Dynamic limits display** — see snapshot usage (X/20) with color warnings when nearing capacity
+- **Consistent visual theme** — UI styled to match portfolio blue/slate palette, with per-category color coding
 
 ## Using Design Trail in your workflow
 
@@ -161,7 +163,7 @@ manifest.json   # Figma plugin manifest
 - [ ] Create plugin icon (128x128px)
 - [ ] Create thumbnail image (1920x1080px)
 - [ ] Screenshot the capture → compare → changelog flow (up to 9 images)
-- [ ] Write listing description and tagline
+- [x] Write listing description and tagline
 - [ ] Submit for Figma review (5-10 business days)
 
 ## License
