@@ -7,7 +7,7 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 ## Features
 
 ### Intuitive workflow
-- **Guided 3-step flow** — Capture → Compare → Review, with a visual progress indicator
+- **Guided 3-step flow** — Capture → Compare → Review, with a visual progress indicator (blue = active, slate = done, avoiding conflict with changelog colors)
 - **Live selection indicator** — see what's selected in Figma before you capture (green dot = ready)
 - **Quick compare** — one-click comparison of your two most recent snapshots
 - **Auto-versioning** — snapshot labels auto-suggest `v1`, `v2`, `v3`, etc.
@@ -160,7 +160,7 @@ manifest.json   # Figma plugin manifest
 ### Publish to Figma Community
 - [x] Fix critical bugs found by PatchPilots (return type mismatch, unsafe casts)
 - [x] Apply patches from PatchPilots review (8 patches across 3 files)
-- [ ] Create plugin icon (128x128px)
+- [ ] Create plugin icon (128x128px) *(SVG draft in `icon.svg`)*
 - [ ] Create thumbnail image (1920x1080px)
 - [ ] Screenshot the capture → compare → changelog flow (up to 9 images)
 - [x] Write listing description and tagline
