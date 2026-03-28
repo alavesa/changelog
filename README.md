@@ -164,7 +164,7 @@ manifest.json   # Figma plugin manifest
 - [x] Create thumbnail image (1920x1080px) — place in `assets/thumbnail.png`
 - [x] Screenshot the capture → compare → changelog flow (up to 9 images) — place in `assets/screenshots/`
 - [x] Write listing description and tagline
-- [x] Submit for Figma review (5-10 business days). Submitted 28.06.2026.
+- [x] Submit for Figma review (5-10 business days). Submitted 28.03.2026.
 
 ## License
 
