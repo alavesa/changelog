@@ -161,10 +161,10 @@ manifest.json   # Figma plugin manifest
 - [x] Fix critical bugs found by PatchPilots (return type mismatch, unsafe casts)
 - [x] Apply patches from PatchPilots review (8 patches across 3 files)
 - [x] Create plugin icon (128x128px) — `assets/icon.png`
-- [ ] Create thumbnail image (1920x1080px) — place in `assets/thumbnail.png`
-- [ ] Screenshot the capture → compare → changelog flow (up to 9 images) — place in `assets/screenshots/`
+- [x] Create thumbnail image (1920x1080px) — place in `assets/thumbnail.png`
+- [x] Screenshot the capture → compare → changelog flow (up to 9 images) — place in `assets/screenshots/`
 - [x] Write listing description and tagline
-- [ ] Submit for Figma review (5-10 business days)
+- [x] Submit for Figma review (5-10 business days). Submitted 28.06.2026.
 
 ## License
 
