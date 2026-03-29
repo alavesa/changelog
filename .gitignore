@@ -3,3 +3,7 @@ dist/
 .DS_Store
 .patchpilots.json
 .patchpilots-memory.json
+.vscode/
+figma_assets/screenshots/
+figma_assets/*.png
+figma_assets/*.svg
