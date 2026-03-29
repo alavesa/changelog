@@ -1,10 +1,12 @@
 {
   "name": "Design Trail",
-  "id": "design-changelog-plugin",
+  "id": "1619765017994112841",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
   "capabilities": [],
   "enableProposedApi": false,
-  "editorType": ["figma"]
+  "editorType": ["figma"],
+  "networkAccess": { "allowedDomains": ["none"] },
+  "documentAccess": "dynamic-page"
 }
