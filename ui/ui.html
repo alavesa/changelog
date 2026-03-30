@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    background: #1a2744;
+    color: #e0e0e0;
+    overflow-x: hidden;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #334155;
+    background: #1a2744;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: #999;
+    font-weight: 500;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab:hover { color: #ccc; }
+  .tab.active { color: #e0e0e0; border-bottom-color: #60a5fa; }
+
+  .tab-content { display: none; padding: 16px; }
+  .tab-content.active { display: block; }
+
+  /* Form elements */
+  input[type="text"], select {
+    width: 100%;
+    padding: 8px 10px;
+    background: #0d1b2e;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 12px;
+    outline: none;
+  }
+  input[type="text"]:focus, select:focus {
+    border-color: #60a5fa;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 4px;
+    color: #aaa;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .field { margin-bottom: 12px; }
+
+  textarea {
+    width: 100%;
+    padding: 8px 10px;
+    background: #0d1b2e;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    min-height: 48px;
+  }
+  textarea:focus { border-color: #60a5fa; }
+  textarea::placeholder { color: #777; }
+
+  .snapshot-annotation {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 3px;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  button {
+    padding: 8px 16px;
+    background: #60a5fa;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  button:hover { background: #3b82f6; }
+  button:disabled { background: #475569; cursor: not-allowed; color: #94a3b8; }
+
+  button.secondary {
+    background: #334155;
+    color: #ddd;
+  }
+  button.secondary:hover { background: #475569; }
+
+  button.danger {
+    background: transparent;
+    color: #F44336;
+    padding: 4px 8px;
+    width: auto;
+    font-size: 11px;
+  }
+  button.danger:hover { background: rgba(244, 67, 54, 0.1); }
+
+  /* Snapshot list */
+  .snapshot-list {
+    margin-top: 12px;
+  }
+  .snapshot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: #1a2744;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+  .snapshot-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .snapshot-label {
+    font-weight: 600;
+    color: #e0e0e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .snapshot-meta {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  /* Summary bar */
+  .summary-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: #1a2744;
+    border: 1px solid #334155;
+    border-radius: 4px;
+  }
+  .summary-stat {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .summary-stat .count { font-size: 18px; display: block; }
+  .stat-added { color: #4CAF50; }
+  .stat-removed { color: #F44336; }
+  .stat-modified { color: #FF9800; }
+
+  /* Changelog entries */
+  .change-section { margin-bottom: 16px; }
+  .change-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #334155;
+  }
+
+  .change-entry {
+    padding: 8px 10px;
+    background: #1a2744;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.1s;
+  }
+  .change-entry:hover { background: #334155; }
+  .change-entry.added { border-left-color: #4CAF50; }
+  .change-entry.removed { border-left-color: #F44336; }
+  .change-entry.modified { border-left-color: #FF9800; }
+
+  .change-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-added { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+  .badge-removed { background: rgba(244, 67, 54, 0.2); color: #F44336; }
+  .badge-modified { background: rgba(255, 152, 0, 0.2); color: #FF9800; }
+
+  .badge-group {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 500;
+    background: #334155;
+    color: #aaa;
+  }
+  .badge-group-structure { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .badge-group-layout    { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+  .badge-group-style     { background: rgba(244,114,182,0.15); color: #f472b6; }
+  .badge-group-typography{ background: rgba(52,211,153,0.15);  color: #34d399; }
+  .badge-group-naming    { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+
+  .change-node-name {
+    font-weight: 600;
+    color: #e0e0e0;
+  }
+  .change-node-type {
+    color: #94a3b8;
+    font-size: 10px;
+  }
+
+  .change-summary {
+    margin-top: 4px;
+    font-size: 10px;
+    color: #94a3b8;
+    cursor: pointer;
+    user-select: none;
+  }
+  .change-summary:hover { color: #aaa; }
+  .change-summary-static { margin-top: 4px; }
+  .change-summary .toggle-arrow { display: inline-block; transition: transform 0.15s; margin-right: 4px; }
+  .change-summary .toggle-arrow.open { transform: rotate(90deg); }
+  .change-details {
+    margin-top: 6px;
+    padding-left: 8px;
+    display: none;
+  }
+  .change-details.open { display: block; }
+  .prop-change {
+    font-size: 11px;
+    color: #bbb;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .prop-name { color: #aaa; font-weight: 500; }
+  .prop-old { color: #F44336; text-decoration: line-through; }
+  .prop-new { color: #4CAF50; }
+  .prop-value {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  /* Timeline panel */
+  .timeline-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #1a2744;
+    z-index: 50;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .timeline-overlay.visible { display: block; }
+
+  .timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .timeline-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e0e0e0;
+  }
+  .timeline-subtitle {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .btn-back {
+    padding: 4px 10px;
+    background: #334155;
+    color: #ddd;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    width: auto;
+  }
+  .btn-back:hover { background: #475569; }
+
+  .timeline-step {
+    position: relative;
+    padding: 10px 12px 10px 24px;
+    margin-bottom: 2px;
+    background: #1a2744;
+    border-radius: 4px;
+  }
+  .timeline-step::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #475569;
+  }
+  .timeline-step:first-child::before { top: 50%; }
+  .timeline-step:last-child::before { bottom: 50%; }
+  .timeline-step:only-child::before { display: none; }
+  .timeline-step::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #60a5fa;
+    border: 2px solid #1a2744;
+    z-index: 1;
+  }
+  .timeline-step-label {
+    font-weight: 600;
+    font-size: 12px;
+    color: #e0e0e0;
+  }
+  .timeline-step-date {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .timeline-step-changes {
+    margin-top: 6px;
+  }
+  .timeline-prop {
+    font-size: 11px;
+    color: #bbb;
+    margin-bottom: 2px;
+  }
+  .timeline-prop .prop-name { color: #aaa; font-weight: 500; }
+  .timeline-prop .prop-new { color: #4CAF50; }
+  .timeline-prop .prop-old { color: #F44336; text-decoration: line-through; }
+  .timeline-no-change {
+    font-size: 11px;
+    color: #64748b;
+    font-style: italic;
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    margin-bottom: 12px;
+  }
+  .filter-bar input[type="text"] {
+    margin-bottom: 8px;
+  }
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .filter-chip {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #475569;
+    background: transparent;
+    color: #999;
+    width: auto;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+  }
+  .filter-chip:hover { border-color: #94a3b8; color: #ccc; background: transparent; }
+  .filter-chip.active { border-color: #60a5fa; color: #60a5fa; background: rgba(96, 165, 250, 0.1); }
+  .filter-chip.active:hover { background: rgba(96, 165, 250, 0.15); }
+  .filter-chip[data-group="structure"].active { border-color: #a78bfa; color: #a78bfa; background: rgba(167,139,250,0.1); }
+  .filter-chip[data-group="layout"].active { border-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.1); }
+  .filter-chip[data-group="style"].active { border-color: #f472b6; color: #f472b6; background: rgba(244,114,182,0.1); }
+  .filter-chip[data-group="typography"].active { border-color: #34d399; color: #34d399; background: rgba(52,211,153,0.1); }
+  .filter-chip[data-group="naming"].active { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.1); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    background: #0d1b2e;
+    color: #e0e0e0;
+    padding: 10px 14px;
+    border-radius: 4px;
+    border: 1px solid #475569;
+    font-size: 12px;
+    z-index: 100;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+  .toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .toast.error { border-color: #F44336; }
+
+  .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 24px 16px;
+    font-size: 12px;
+  }
+  .empty-state .empty-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+  .empty-state .empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #bbb;
+    margin-bottom: 4px;
+  }
+  .empty-state .empty-hint {
+    color: #777;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .empty-state .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #60a5fa;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* Selection indicator */
+  .selection-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    margin-bottom: 12px;
+    background: #0d1b2e;
+    border-radius: 4px;
+    border: 1px solid #334155;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .selection-bar .sel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #475569;
+    flex-shrink: 0;
+  }
+  .selection-bar.has-selection .sel-dot { background: #4CAF50; }
+  .selection-bar.has-selection { color: #ccc; border-color: #475569; }
+
+  /* Quick compare */
+  .quick-compare {
+    padding: 12px;
+    background: #1a2744;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .quick-compare .qc-label {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+  .quick-compare .qc-desc {
+    font-size: 12px;
+    color: #ccc;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  /* Comparison header */
+  .comparison-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    font-size: 12px;
+    color: #ccc;
+  }
+  .comparison-header .comp-snap {
+    padding: 4px 8px;
+    background: #1a2744;
+    border-radius: 4px;
+    font-weight: 600;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .comparison-header .comp-arrow { color: #60a5fa; font-weight: 700; }
+
+  /* Workflow steps (horizontal) */
+  .workflow-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 16px 0;
+    font-size: 10px;
+    color: #64748b;
+  }
+  .workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .workflow-step.active { color: #60a5fa; }
+  .workflow-step.done { color: #94a3b8; }
+  .workflow-step .ws-num {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+  }
+  .workflow-step.done .ws-num { background: #94a3b8; border-color: #94a3b8; color: #0d1b2e; }
+  .workflow-step.active .ws-num { background: #60a5fa; border-color: #60a5fa; color: #fff; }
+  .workflow-divider { color: #475569; font-size: 10px; }
+
+  /* Smart summary */
+  .change-nlp {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #ccc;
+    line-height: 1.5;
+  }
+
+  /* Review mode */
+  .review-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    background: #0d1b2e;
+    border-radius: 4px;
+    border: 1px solid #334155;
+  }
+  .review-bar .review-stat {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .review-bar .review-stat span { font-weight: 600; }
+  .review-bar .review-stat.approved span { color: #4CAF50; }
+  .review-bar .review-stat.flagged span { color: #FF9800; }
+  .review-bar .review-stat.pending span { color: #94a3b8; }
+
+  .review-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    align-items: center;
+  }
+  .review-btn {
+    padding: 2px 8px;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid #475569;
+    background: transparent;
+    color: #999;
+    width: auto;
+    font-weight: 500;
+  }
+  .review-btn:hover { border-color: #94a3b8; color: #ccc; }
+  .review-btn.active-approve { border-color: #4CAF50; color: #4CAF50; background: rgba(76,175,80,0.1); }
+  .review-btn.active-flag { border-color: #FF9800; color: #FF9800; background: rgba(255,152,0,0.1); }
+  .review-comment-input {
+    flex: 1;
+    padding: 3px 6px;
+    font-size: 10px;
+    background: #0d1b2e;
+    border: 1px solid #475569;
+    border-radius: 3px;
+    color: #e0e0e0;
+    outline: none;
+    width: auto;
+  }
+  .review-comment-input:focus { border-color: #60a5fa; }
+  .review-comment-display {
+    font-size: 10px;
+    color: #aaa;
+    font-style: italic;
+    margin-top: 3px;
+    padding-left: 2px;
+  }
+
+  /* Visual preview */
+  .visual-preview {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: #0d1b2e;
+    border-radius: 6px;
+    border: 1px solid #334155;
+  }
+  .preview-pane {
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+  }
+  .preview-pane img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 4px;
+    border: 1px solid #475569;
+    background: #1a2744;
+  }
+  .preview-label {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .preview-placeholder {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a2744;
+    border-radius: 4px;
+    border: 1px dashed #475569;
+    color: #64748b;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" data-tab="capture">Capture</div>
+  <div class="tab" data-tab="compare">Compare</div>
+  <div class="tab" data-tab="changelog">Changelog</div>
+</div>
+
+<div class="workflow-steps" id="workflow-steps">
+  <div class="workflow-step active" id="ws-capture"><span class="ws-num">1</span> Capture</div>
+  <span class="workflow-divider">&rsaquo;</span>
+  <div class="workflow-step" id="ws-compare"><span class="ws-num">2</span> Compare</div>
+  <span class="workflow-divider">&rsaquo;</span>
+  <div class="workflow-step" id="ws-review"><span class="ws-num">3</span> Review</div>
+</div>
+
+<!-- Capture Tab -->
+<div id="tab-capture" class="tab-content active">
+  <div class="selection-bar" id="selection-bar">
+    <span class="sel-dot"></span>
+    <span id="sel-text">Select a frame in Figma to capture</span>
+  </div>
+  <div class="field">
+    <label>Snapshot Label</label>
+    <input type="text" id="snapshot-label" placeholder="e.g. v1 - Initial design">
+  </div>
+  <div class="field">
+    <label>Why? (optional)</label>
+    <textarea id="snapshot-annotation" rows="2" placeholder="e.g. Adjusted spacing after design review"></textarea>
+  </div>
+  <button id="btn-capture">Capture Snapshot</button>
+  <div id="limits-info" style="margin-top:8px;padding:8px 10px;background:#0d1b2e;border-radius:4px;font-size:10px;color:#94a3b8;line-height:1.5;">
+    <strong style="color:#999;">0/20 snapshots</strong> · Up to 5,000 nodes per snapshot
+  </div>
+  <div class="snapshot-list" id="snapshot-list"></div>
+  <button class="danger" id="btn-clear-all" style="margin-top:12px;width:100%;font-size:10px;padding:6px;" onclick="if(confirm('Clear all snapshots and reviews from this file?')){parent.postMessage({pluginMessage:{type:'clear-all-data'}},'*')}">Clear All Data</button>
+</div>
+
+<!-- Compare Tab -->
+<div id="tab-compare" class="tab-content">
+  <div class="quick-compare" id="quick-compare" style="display:none;">
+    <div class="qc-label">Quick compare</div>
+    <div class="qc-desc" id="qc-desc"></div>
+    <button id="btn-quick-compare">Compare Latest Changes</button>
+  </div>
+  <div id="or-divider" style="font-size:10px;text-align:center;color:#64748b;margin-bottom:8px;display:none;">or pick specific snapshots</div>
+  <div class="field">
+    <label>From (older)</label>
+    <select id="select-from"><option value="">Loading...</option></select>
+  </div>
+  <div class="field">
+    <label>To (newer)</label>
+    <select id="select-to"><option value="">Loading...</option></select>
+  </div>
+  <button id="btn-compare" disabled>Compare Snapshots</button>
+</div>
+
+<!-- Changelog Tab -->
+<div id="tab-changelog" class="tab-content">
+  <div id="changelog-empty" class="empty-state">
+    <div class="empty-icon">&#128203;</div>
+    <div class="empty-title">No changelog yet</div>
+    <div class="empty-hint">
+      <span class="step-number">1</span> Capture snapshots of your design<br>
+      <span class="step-number">2</span> Compare two snapshots to see what changed
+    </div>
+  </div>
+  <div id="changelog-content" style="display: none;">
+    <div class="comparison-header" id="comparison-header"></div>
+    <div id="visual-preview" class="visual-preview" style="display:none;">
+      <div class="preview-pane">
+        <div class="preview-label">Before</div>
+        <div id="preview-before"></div>
+      </div>
+      <div class="preview-pane">
+        <div class="preview-label">After</div>
+        <div id="preview-after"></div>
+      </div>
+    </div>
+    <div class="summary-bar" id="summary-bar"></div>
+    <div class="review-bar" id="review-bar" style="display:none;">
+      <div class="review-stat approved"><span id="review-approved-count">0</span> approved</div>
+      <div class="review-stat flagged"><span id="review-flagged-count">0</span> flagged</div>
+      <div class="review-stat pending"><span id="review-pending-count">0</span> pending</div>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="changelog-search" placeholder="Search by node name...">
+      <div class="filter-chips">
+        <button class="filter-chip active" data-group="all">All</button>
+        <button class="filter-chip" data-group="structure">Structure</button>
+        <button class="filter-chip" data-group="layout">Layout</button>
+        <button class="filter-chip" data-group="style">Style</button>
+        <button class="filter-chip" data-group="typography">Typography</button>
+        <button class="filter-chip" data-group="naming">Naming</button>
+      </div>
+    </div>
+    <div id="changelog-entries"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button id="btn-export" class="secondary" style="flex:1;">Markdown</button>
+      <button id="btn-export-json" class="secondary" style="flex:1;">JSON</button>
+      <button id="btn-export-csv" class="secondary" style="flex:1;">CSV</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button id="btn-export-review" class="secondary" style="flex:1;">Copy Review Report</button>
+    </div>
+  </div>
+</div>
+
+<div class="timeline-overlay" id="timeline-overlay">
+  <div class="timeline-header">
+    <div>
+      <div class="timeline-title" id="timeline-title"></div>
+      <div class="timeline-subtitle" id="timeline-subtitle"></div>
+    </div>
+    <button class="btn-back" id="btn-timeline-back">Back</button>
+  </div>
+  <div id="timeline-entries"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // State
+  let snapshots = [];
+  let currentChangelog = null;
+  var reviewState = {}; // { nodeId: { status: 'approved'|'flagged'|'pending', comment: '' } }
+  var reviewKey = null; // 'review_fromId_toId'
+  var currentFromThumbnail = null;
+  var currentToThumbnail = null;
+
+  // Elements
+  const tabs = document.querySelectorAll('.tab');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const snapshotLabel = document.getElementById('snapshot-label');
+  const snapshotAnnotation = document.getElementById('snapshot-annotation');
+  const btnCapture = document.getElementById('btn-capture');
+  const snapshotList = document.getElementById('snapshot-list');
+  const selectFrom = document.getElementById('select-from');
+  const selectTo = document.getElementById('select-to');
+  const btnCompare = document.getElementById('btn-compare');
+  const changelogEmpty = document.getElementById('changelog-empty');
+  const changelogContent = document.getElementById('changelog-content');
+  const summaryBar = document.getElementById('summary-bar');
+  const changelogEntries = document.getElementById('changelog-entries');
+  const btnExport = document.getElementById('btn-export');
+  const toast = document.getElementById('toast');
+  const changelogSearch = document.getElementById('changelog-search');
+  const filterChips = document.querySelectorAll('.filter-chip');
+
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+
+      if (tab.dataset.tab === 'compare') {
+        parent.postMessage({ pluginMessage: { type: 'list-snapshots' } }, '*');
+      }
+    });
+  });
+
+  // Toast
+  let toastTimer;
+  function showToast(message, isError) {
+    toast.textContent = message;
+    toast.className = 'toast visible' + (isError ? ' error' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.className = 'toast'; }, 3000);
+  }
+
+  // Capture
+  btnCapture.addEventListener('click', () => {
+    const label = snapshotLabel.value.trim();
+    if (!label) {
+      showToast('Please enter a label for the snapshot.', true);
+      return;
+    }
+    const annotation = snapshotAnnotation.value.trim();
+    parent.postMessage({ pluginMessage: { type: 'capture-snapshot', label, annotation: annotation || undefined } }, '*');
+    snapshotLabel.value = '';
+    snapshotAnnotation.value = '';
+  });
+
+  // Enter key to capture
+  snapshotLabel.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); btnCapture.click(); }
+  });
+
+  // Relative time helper
+  function timeAgo(ts) {
+    var diff = Date.now() - ts;
+    var secs = Math.floor(diff / 1000);
+    if (secs < 60) return 'just now';
+    var mins = Math.floor(secs / 60);
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    var days = Math.floor(hrs / 24);
+    if (days < 7) return days + 'd ago';
+    return new Date(ts).toLocaleDateString();
+  }
+
+  // Update workflow step indicators
+  function updateWorkflow() {
+    var wsCap = document.getElementById('ws-capture');
+    var wsCmp = document.getElementById('ws-compare');
+    var wsRev = document.getElementById('ws-review');
+    wsCap.className = 'workflow-step' + (snapshots.length > 0 ? ' done' : ' active');
+    wsCmp.className = 'workflow-step' + (currentChangelog ? ' done' : (snapshots.length >= 2 ? ' active' : ''));
+    wsRev.className = 'workflow-step' + (currentChangelog ? ' active' : '');
+  }
+
+  // Update quick compare section
+  function updateQuickCompare() {
+    var qc = document.getElementById('quick-compare');
+    var orDiv = document.getElementById('or-divider');
+    if (snapshots.length >= 2) {
+      var prev = snapshots[snapshots.length - 2];
+      var latest = snapshots[snapshots.length - 1];
+      document.getElementById('qc-desc').textContent = prev.label + '  \u2192  ' + latest.label;
+      qc.style.display = 'block';
+      orDiv.style.display = 'block';
+    } else {
+      qc.style.display = 'none';
+      orDiv.style.display = 'none';
+    }
+  }
+
+  // Render snapshot list
+  function updateLimitsInfo() {
+    var el = document.getElementById('limits-info');
+    if (!el) return;
+    var count = snapshots.length;
+    var color = count >= 18 ? '#FF9800' : (count >= 20 ? '#F44336' : '#999');
+    el.innerHTML = '<strong style="color:' + color + ';">' + count + '/20 snapshots</strong> \u00b7 Up to 5,000 nodes per snapshot';
+  }
+
+  function renderSnapshotList() {
+    updateWorkflow();
+    updateQuickCompare();
+    updateLimitsInfo();
+
+    if (snapshots.length === 0) {
+      snapshotList.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">&#128247;</div>' +
+        '<div class="empty-title">No snapshots yet</div>' +
+        '<div class="empty-hint">Select a frame in Figma and click Capture Snapshot.<br>You\'ll need at least 2 to compare.</div>' +
+        '</div>';
+      return;
+    }
+    snapshotList.innerHTML = snapshots.slice().reverse().map(function(s) {
+      var relTime = timeAgo(s.timestamp);
+      var annotationHtml = s.annotation
+        ? '<div class="snapshot-annotation" title="' + esc(s.annotation) + '">' + esc(s.annotation) + '</div>'
+        : '';
+      return '<div class="snapshot-item">' +
+          '<div class="snapshot-info">' +
+            '<div class="snapshot-label">' + esc(s.label) + '</div>' +
+            '<div class="snapshot-meta">' + esc(s.rootNodeName) + ' \u00b7 ' + s.nodeCount + ' nodes \u00b7 ' + relTime + '</div>' +
+            annotationHtml +
+          '</div>' +
+          '<button class="danger" onclick="deleteSnapshot(\'' + s.id + '\')">Delete</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  // Render select dropdowns
+  function renderSelects() {
+    var reversed = snapshots.slice().reverse();
+    var options = reversed.map(function(s) {
+      return '<option value="' + s.id + '">' + esc(s.label) + ' (' + timeAgo(s.timestamp) + ')</option>';
+    }).join('');
+
+    if (snapshots.length < 2) {
+      selectFrom.innerHTML = '<option value="">Need at least 2 snapshots</option>';
+      selectTo.innerHTML = '<option value="">Need at least 2 snapshots</option>';
+      btnCompare.disabled = true;
+    } else {
+      selectFrom.innerHTML = options;
+      selectTo.innerHTML = options;
+      // Default: latest=to (index 0), second latest=from (index 1)
+      selectFrom.selectedIndex = 1;
+      selectTo.selectedIndex = 0;
+      btnCompare.disabled = false;
+    }
+  }
+
+  // Delete
+  window.deleteSnapshot = function(id) {
+    parent.postMessage({ pluginMessage: { type: 'delete-snapshot', id } }, '*');
+  };
+
+  // Quick compare
+  document.getElementById('btn-quick-compare').addEventListener('click', function() {
+    if (snapshots.length < 2) return;
+    var fromId = snapshots[snapshots.length - 2].id;
+    var toId = snapshots[snapshots.length - 1].id;
+    parent.postMessage({ pluginMessage: { type: 'compare-snapshots', fromId: fromId, toId: toId } }, '*');
+  });
+
+  // Compare
+  btnCompare.addEventListener('click', () => {
+    const fromId = selectFrom.value;
+    const toId = selectTo.value;
+    if (!fromId || !toId) return;
+    if (fromId === toId) {
+      showToast('Please select two different snapshots.', true);
+      return;
+    }
+    parent.postMessage({ pluginMessage: { type: 'compare-snapshots', fromId, toId } }, '*');
+  });
+
+  // Render changelog
+  function renderVisualPreview() {
+    var container = document.getElementById('visual-preview');
+    var beforeEl = document.getElementById('preview-before');
+    var afterEl = document.getElementById('preview-after');
+
+    if (!currentFromThumbnail && !currentToThumbnail) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+
+    beforeEl.innerHTML = currentFromThumbnail
+      ? '<img src="' + currentFromThumbnail + '" alt="Before">'
+      : '<div class="preview-placeholder">No preview</div>';
+
+    afterEl.innerHTML = currentToThumbnail
+      ? '<img src="' + currentToThumbnail + '" alt="After">'
+      : '<div class="preview-placeholder">No preview</div>';
+  }
+
+  function renderChangelog(changelog) {
+    currentChangelog = changelog;
+    changelogEmpty.style.display = 'none';
+    changelogContent.style.display = 'block';
+
+    // Set review key and load saved review
+    reviewKey = 'review_' + changelog.fromSnapshot.id + '_' + changelog.toSnapshot.id;
+    parent.postMessage({ pluginMessage: { type: 'load-review', key: reviewKey } }, '*');
+
+    // Reset filters
+    activeGroup = 'all';
+    changelogSearch.value = '';
+    filterChips.forEach(function(c) { c.classList.remove('active'); });
+    filterChips[0].classList.add('active');
+
+    // Comparison header
+    document.getElementById('comparison-header').innerHTML =
+      '<span class="comp-snap">' + esc(changelog.fromSnapshot.label) + '</span>' +
+      '<span class="comp-arrow">\u2192</span>' +
+      '<span class="comp-snap">' + esc(changelog.toSnapshot.label) + '</span>';
+
+    var s = changelog.summary;
+    summaryBar.innerHTML =
+      '<div class="summary-stat stat-added"><span class="count">+' + s.added + '</span>added</div>' +
+      '<div class="summary-stat stat-removed"><span class="count">-' + s.removed + '</span>removed</div>' +
+      '<div class="summary-stat stat-modified"><span class="count">~' + s.modified + '</span>modified</div>';
+
+    updateWorkflow();
+
+    renderFilteredChangelog();
+    updateReviewBar();
+
+    // Switch to changelog tab
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    tabContents.forEach(function(tc) { tc.classList.remove('active'); });
+    document.querySelector('[data-tab="changelog"]').classList.add('active');
+    document.getElementById('tab-changelog').classList.add('active');
+  }
+
+  // Filter state
+  var activeGroup = 'all';
+
+  filterChips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      filterChips.forEach(function(c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeGroup = chip.dataset.group;
+      renderFilteredChangelog();
+    });
+  });
+
+  changelogSearch.addEventListener('input', function() {
+    renderFilteredChangelog();
+  });
+
+  function renderFilteredChangelog() {
+    if (!currentChangelog) return;
+
+    var searchTerm = changelogSearch.value.trim().toLowerCase();
+    var filtered = currentChangelog.entries.filter(function(entry) {
+      // Filter by node name search
+      if (searchTerm && entry.nodeName.toLowerCase().indexOf(searchTerm) === -1) {
+        return false;
+      }
+      // Filter by change group
+      if (activeGroup === 'all') return true;
+      // Added/removed entries have no change groups, show them only when "all"
+      if (entry.category === 'added' || entry.category === 'removed') return false;
+      // Modified entries: check if any change matches the selected group
+      return entry.changes.some(function(c) { return c.group === activeGroup; });
+    });
+
+    var added = filtered.filter(function(e) { return e.category === 'added'; });
+    var removed = filtered.filter(function(e) { return e.category === 'removed'; });
+    var modified = filtered.filter(function(e) { return e.category === 'modified'; });
+
+    var html = '';
+    if (added.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-added">Added</div>';
+      html += added.map(function(e) { return renderEntry(e); }).join('');
+      html += '</div>';
+    }
+    if (removed.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-removed">Removed</div>';
+      html += removed.map(function(e) { return renderEntry(e); }).join('');
+      html += '</div>';
+    }
+    if (modified.length) {
+      html += '<div class="change-section"><div class="change-section-title stat-modified">Modified</div>';
+      html += modified.map(function(e) { return renderEntry(e); }).join('');
+      html += '</div>';
+    }
+
+    if (!html) {
+      html = '<div class="empty-state">No changes match your filters.</div>';
+    }
+
+    changelogEntries.innerHTML = html;
+  }
+
+  // Smart plain-English summary generator
+  function generateNLPSummary(entry) {
+    if (entry.category === 'added') return 'New ' + entry.nodeType.toLowerCase() + ' added';
+    if (entry.category === 'removed') return entry.nodeType.toLowerCase() + ' removed';
+    if (!entry.changes || !entry.changes.length) return '';
+
+    var sentences = [];
+    var changeMap = {};
+    entry.changes.forEach(function(c) { changeMap[c.property] = c; });
+
+    // Position changes
+    if (changeMap.x || changeMap.y) {
+      var parts = [];
+      if (changeMap.x) {
+        var dx = parseFloat(changeMap.x.newValue) - parseFloat(changeMap.x.oldValue);
+        parts.push((dx > 0 ? 'right' : 'left') + ' by ' + Math.abs(dx).toFixed(0) + 'px');
+      }
+      if (changeMap.y) {
+        var dy = parseFloat(changeMap.y.newValue) - parseFloat(changeMap.y.oldValue);
+        parts.push((dy > 0 ? 'down' : 'up') + ' by ' + Math.abs(dy).toFixed(0) + 'px');
+      }
+      sentences.push('Moved ' + parts.join(' and '));
+    }
+
+    // Size changes
+    if (changeMap.width || changeMap.height) {
+      var oldW = changeMap.width ? changeMap.width.oldValue : '—';
+      var newW = changeMap.width ? changeMap.width.newValue : '—';
+      var oldH = changeMap.height ? changeMap.height.oldValue : '—';
+      var newH = changeMap.height ? changeMap.height.newValue : '—';
+      if (changeMap.width && changeMap.height) {
+        sentences.push('Resized from ' + oldW + '\u00d7' + oldH + ' to ' + newW + '\u00d7' + newH);
+      } else if (changeMap.width) {
+        sentences.push('Width changed from ' + oldW + ' to ' + newW);
+      } else {
+        sentences.push('Height changed from ' + oldH + ' to ' + newH);
+      }
+    }
+
+    // Rotation
+    if (changeMap.rotation) {
+      sentences.push('Rotated from ' + changeMap.rotation.oldValue + '\u00b0 to ' + changeMap.rotation.newValue + '\u00b0');
+    }
+
+    // Visibility
+    if (changeMap.visible) {
+      sentences.push(changeMap.visible.newValue === 'true' ? 'Made visible' : 'Hidden');
+    }
+
+    // Opacity
+    if (changeMap.opacity) {
+      var o1 = Math.round(parseFloat(changeMap.opacity.oldValue) * 100);
+      var o2 = Math.round(parseFloat(changeMap.opacity.newValue) * 100);
+      sentences.push('Opacity changed from ' + o1 + '% to ' + o2 + '%');
+    }
+
+    // Fills
+    if (changeMap.fills) sentences.push('Fill colors updated');
+
+    // Strokes
+    if (changeMap.strokes || changeMap.strokeWeight) {
+      sentences.push('Stroke styling changed');
+    }
+
+    // Effects
+    if (changeMap.effects) sentences.push('Effects updated');
+
+    // Corner radius
+    if (changeMap.cornerRadius) {
+      sentences.push('Corner radius changed to ' + changeMap.cornerRadius.newValue);
+    }
+
+    // Blend mode
+    if (changeMap.blendMode) {
+      sentences.push('Blend mode set to ' + changeMap.blendMode.newValue.toLowerCase().replace(/_/g, ' '));
+    }
+
+    // Text content
+    if (changeMap.characters) {
+      var oldTxt = changeMap.characters.oldValue;
+      var newTxt = changeMap.characters.newValue;
+      if (oldTxt.length < 30 && newTxt.length < 30) {
+        sentences.push('Text changed from "' + oldTxt + '" to "' + newTxt + '"');
+      } else {
+        sentences.push('Text content updated');
+      }
+    }
+
+    // Font changes
+    if (changeMap.fontName) sentences.push('Font changed to ' + changeMap.fontName.newValue);
+    if (changeMap.fontSize) sentences.push('Font size changed to ' + changeMap.fontSize.newValue);
+    if (changeMap.fontWeight) sentences.push('Font weight changed to ' + changeMap.fontWeight.newValue);
+
+    // Text alignment
+    if (changeMap.textAlignHorizontal) sentences.push('Text aligned ' + changeMap.textAlignHorizontal.newValue.toLowerCase());
+
+    // Line height / letter spacing
+    if (changeMap.lineHeight) sentences.push('Line height adjusted');
+    if (changeMap.letterSpacing) sentences.push('Letter spacing adjusted');
+    if (changeMap.textDecoration) sentences.push('Text decoration changed');
+    if (changeMap.textCase) sentences.push('Text case set to ' + changeMap.textCase.newValue.toLowerCase().replace(/_/g, ' '));
+
+    // Auto-layout
+    if (changeMap.layoutMode) {
+      if (changeMap.layoutMode.newValue === 'NONE') {
+        sentences.push('Auto-layout removed');
+      } else {
+        sentences.push('Auto-layout set to ' + changeMap.layoutMode.newValue.toLowerCase());
+      }
+    }
+
+    // Padding (grouped)
+    if (changeMap.paddingTop || changeMap.paddingRight || changeMap.paddingBottom || changeMap.paddingLeft) {
+      sentences.push('Padding adjusted');
+    }
+
+    // Spacing
+    if (changeMap.itemSpacing) sentences.push('Item spacing changed to ' + changeMap.itemSpacing.newValue);
+
+    // Layout sizing
+    if (changeMap.layoutSizingHorizontal || changeMap.layoutSizingVertical) {
+      sentences.push('Layout sizing mode updated');
+    }
+
+    // Name
+    if (changeMap.name) sentences.push('Renamed from "' + changeMap.name.oldValue + '" to "' + changeMap.name.newValue + '"');
+
+    // Locked
+    if (changeMap.locked) sentences.push(changeMap.locked.newValue === 'true' ? 'Locked' : 'Unlocked');
+
+    // Clip content
+    if (changeMap.clipsContent) sentences.push(changeMap.clipsContent.newValue === 'true' ? 'Clip content enabled' : 'Clip content disabled');
+
+    if (sentences.length === 0) sentences.push(entry.changes.length + ' properties changed');
+    return sentences.join('. ') + '.';
+  }
+
+  // Merge related properties into readable summary lines
+  var PROP_MERGES = {
+    'padding': ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
+    'corner radii': ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius'],
+    'stroke weights': ['strokeTopWeight', 'strokeBottomWeight', 'strokeLeftWeight', 'strokeRightWeight'],
+  };
+  var MERGED_SET = {};
+  Object.keys(PROP_MERGES).forEach(function(k) {
+    PROP_MERGES[k].forEach(function(p) { MERGED_SET[p] = k; });
+  });
+
+  // Human-friendly labels for raw property names
+  var PROP_LABELS = {
+    x: 'X', y: 'Y', width: 'Width', height: 'Height', rotation: 'Rotation',
+    visible: 'Visible', locked: 'Locked', isMask: 'Mask', clipsContent: 'Clip content',
+    opacity: 'Opacity', blendMode: 'Blend mode',
+    fills: 'Fills', strokes: 'Strokes', effects: 'Effects',
+    cornerRadius: 'Corner radius', cornerSmoothing: 'Corner smoothing',
+    strokeWeight: 'Stroke weight', strokeAlign: 'Stroke align',
+    strokeCap: 'Stroke cap', strokeJoin: 'Stroke join', dashPattern: 'Dash pattern',
+    layoutMode: 'Auto-layout', layoutWrap: 'Wrap', itemSpacing: 'Gap',
+    counterAxisSpacing: 'Cross gap',
+    primaryAxisSizingMode: 'Primary sizing', counterAxisSizingMode: 'Cross sizing',
+    primaryAxisAlignItems: 'Primary align', counterAxisAlignItems: 'Cross align',
+    layoutSizingHorizontal: 'H sizing', layoutSizingVertical: 'V sizing',
+    layoutAlign: 'Layout align', layoutGrow: 'Grow', layoutPositioning: 'Positioning',
+    constraints: 'Constraints', minWidth: 'Min W', maxWidth: 'Max W',
+    minHeight: 'Min H', maxHeight: 'Max H',
+    characters: 'Text', fontSize: 'Font size', fontName: 'Font', fontWeight: 'Weight',
+    textAlignHorizontal: 'H align', textAlignVertical: 'V align',
+    textAutoResize: 'Auto resize', lineHeight: 'Line height',
+    letterSpacing: 'Letter spacing', textDecoration: 'Decoration',
+    textCase: 'Text case', paragraphIndent: 'Indent', paragraphSpacing: 'Para spacing',
+    name: 'Name', children: 'Children'
+  };
+
+  function groupChanges(changes) {
+    var grouped = [];
+    var mergedDone = {};
+
+    changes.forEach(function(c) {
+      var mergeKey = MERGED_SET[c.property];
+      if (mergeKey) {
+        if (mergedDone[mergeKey]) return;
+        mergedDone[mergeKey] = true;
+        // Collect all changes in this merge group
+        var members = PROP_MERGES[mergeKey];
+        var memberChanges = changes.filter(function(ch) { return members.indexOf(ch.property) !== -1; });
+        if (memberChanges.length === 0) return;
+        var oldVals = memberChanges.map(function(ch) { return ch.oldValue || '0'; }).join('/');
+        var newVals = memberChanges.map(function(ch) { return ch.newValue || '0'; }).join('/');
+        grouped.push({ label: mergeKey, group: c.group, oldValue: oldVals, newValue: newVals });
+      } else {
+        var label = PROP_LABELS[c.property] || c.property;
+        grouped.push({ label: label, group: c.group, oldValue: c.oldValue, newValue: c.newValue });
+      }
+    });
+    return grouped;
+  }
+
+  // Count unique groups in changes and return colored badge HTML
+  function summarizeGroups(changes) {
+    var groups = {};
+    changes.forEach(function(c) { groups[c.group] = (groups[c.group] || 0) + 1; });
+    return Object.keys(groups).map(function(g) {
+      return '<span class="badge-group badge-group-' + g + '">' + groups[g] + ' ' + g + '</span>';
+    }).join(' ');
+  }
+
+  var entryIdCounter = 0;
+  function renderEntry(entry) {
+    var eid = 'entry-' + (entryIdCounter++);
+    var badge = '<span class="badge badge-' + entry.category + '">' + entry.category + '</span>';
+    var nlpHtml = '<div class="change-nlp">' + esc(generateNLPSummary(entry)) + '</div>';
+    var summaryLine = '';
+    var details = '';
+
+    if (entry.changes && entry.changes.length) {
+      var grouped = groupChanges(entry.changes);
+      var groupSummary = summarizeGroups(entry.changes);
+      summaryLine = '<div class="change-summary" onclick="toggleDetails(\'' + eid + '\')">' +
+        '<span class="toggle-arrow" id="arrow-' + eid + '">&#9654;</span> ' +
+        grouped.length + ' changes &nbsp;' + groupSummary +
+        '</div>';
+      details = '<div class="change-details" id="details-' + eid + '">' + grouped.map(function(c) {
+        return '<div class="prop-change">' +
+          '<span class="badge-group badge-group-' + c.group + '">' + c.group + '</span>' +
+          '<span class="prop-name">' + esc(c.label) + '</span>' +
+          '<span class="prop-old prop-value" title="' + esc(c.oldValue) + '">' + esc(truncate(c.oldValue)) + '</span>' +
+          ' → ' +
+          '<span class="prop-new prop-value" title="' + esc(c.newValue) + '">' + esc(truncate(c.newValue)) + '</span>' +
+          '</div>';
+      }).join('') + '</div>';
+    } else {
+      summaryLine = '<div class="change-summary-static">' +
+        '<span class="badge-group badge-group-structure">structure</span>' +
+        '</div>';
+    }
+
+    // Review controls
+    var review = reviewState[entry.nodeId] || { status: 'pending', comment: '' };
+    var approveClass = review.status === 'approved' ? ' active-approve' : '';
+    var flagClass = review.status === 'flagged' ? ' active-flag' : '';
+    var commentHtml = review.comment
+      ? '<div class="review-comment-display">"' + esc(review.comment) + '"</div>'
+      : '';
+    var escapedNodeId = entry.nodeId.replace(/'/g, "\\'");
+    var escapedName = esc(entry.nodeName).replace(/'/g, "\\'");
+    var timelineBtn = '<button class="review-btn" style="margin-left:auto;" onclick="event.stopPropagation();showNodeTimeline(\'' + escapedNodeId + '\',\'' + escapedName + '\')">Timeline</button>';
+    var reviewHtml = '<div class="review-actions">' +
+      '<button class="review-btn' + approveClass + '" onclick="event.stopPropagation();setReview(\'' + escapedNodeId + '\',\'approved\')" title="Approve">&#10003;</button>' +
+      '<button class="review-btn' + flagClass + '" onclick="event.stopPropagation();setReview(\'' + escapedNodeId + '\',\'flagged\')" title="Flag">&#9873;</button>' +
+      '<input class="review-comment-input" placeholder="Comment..." value="' + esc(review.comment) + '" ' +
+        'onchange="setReviewComment(\'' + escapedNodeId + '\',this.value)" onclick="event.stopPropagation()">' +
+      timelineBtn +
+      '</div>' + commentHtml;
+
+    return '<div class="change-entry ' + entry.category + '" id="review-entry-' + entry.nodeId.replace(/[^a-zA-Z0-9]/g, '_') + '">' +
+      '<div class="change-header" onclick="highlightNode(\'' + entry.nodeId + '\')">' +
+        badge +
+        '<span class="change-node-name">' + esc(entry.nodeName) + '</span>' +
+        '<span class="change-node-type">' + entry.nodeType + '</span>' +
+      '</div>' +
+      nlpHtml + summaryLine + details + reviewHtml +
+      '</div>';
+  }
+
+  window.toggleDetails = function(eid) {
+    var details = document.getElementById('details-' + eid);
+    var arrow = document.getElementById('arrow-' + eid);
+    if (details) {
+      details.classList.toggle('open');
+      arrow.classList.toggle('open');
+    }
+  };
+
+  // Review functions
+  window.setReview = function(nodeId, status) {
+    if (!reviewState[nodeId]) reviewState[nodeId] = { status: 'pending', comment: '' };
+    // Toggle: if already set to this status, go back to pending
+    if (reviewState[nodeId].status === status) {
+      reviewState[nodeId].status = 'pending';
+    } else {
+      reviewState[nodeId].status = status;
+    }
+    saveReviewState();
+    updateReviewBar();
+    // Re-render to update button states
+    renderFilteredChangelog();
+  };
+
+  window.setReviewComment = function(nodeId, comment) {
+    if (!reviewState[nodeId]) reviewState[nodeId] = { status: 'pending', comment: '' };
+    reviewState[nodeId].comment = comment;
+    saveReviewState();
+  };
+
+  function saveReviewState() {
+    if (reviewKey) {
+      parent.postMessage({ pluginMessage: { type: 'save-review', key: reviewKey, data: reviewState } }, '*');
+    }
+  }
+
+  function updateReviewBar() {
+    if (!currentChangelog) return;
+    var bar = document.getElementById('review-bar');
+    var total = currentChangelog.entries.length;
+    var approved = 0, flagged = 0;
+    currentChangelog.entries.forEach(function(e) {
+      var r = reviewState[e.nodeId];
+      if (r && r.status === 'approved') approved++;
+      else if (r && r.status === 'flagged') flagged++;
+    });
+    var pending = total - approved - flagged;
+    document.getElementById('review-approved-count').textContent = approved;
+    document.getElementById('review-flagged-count').textContent = flagged;
+    document.getElementById('review-pending-count').textContent = pending;
+    bar.style.display = 'flex';
+  }
+
+  function generateReviewReport() {
+    if (!currentChangelog) return '';
+    var lines = [];
+    var cl = currentChangelog;
+    lines.push('# Design Review Report');
+    lines.push('');
+    lines.push('**From:** ' + cl.fromSnapshot.label + ' | **To:** ' + cl.toSnapshot.label);
+    lines.push('**Date:** ' + new Date().toLocaleString());
+    lines.push('');
+
+    var approved = [], flagged = [], pending = [];
+    cl.entries.forEach(function(e) {
+      var r = reviewState[e.nodeId] || { status: 'pending', comment: '' };
+      var item = { entry: e, comment: r.comment, summary: generateNLPSummary(e) };
+      if (r.status === 'approved') approved.push(item);
+      else if (r.status === 'flagged') flagged.push(item);
+      else pending.push(item);
+    });
+
+    lines.push('## Summary');
+    lines.push('- ' + approved.length + ' approved, ' + flagged.length + ' flagged, ' + pending.length + ' pending');
+    lines.push('');
+
+    if (flagged.length) {
+      lines.push('## Flagged');
+      flagged.forEach(function(i) {
+        lines.push('- **' + i.entry.nodeName + '** (' + i.entry.nodeType + ') — ' + i.summary);
+        if (i.comment) lines.push('  > ' + i.comment);
+      });
+      lines.push('');
+    }
+    if (approved.length) {
+      lines.push('## Approved');
+      approved.forEach(function(i) {
+        lines.push('- **' + i.entry.nodeName + '** (' + i.entry.nodeType + ') — ' + i.summary);
+        if (i.comment) lines.push('  > ' + i.comment);
+      });
+      lines.push('');
+    }
+    if (pending.length) {
+      lines.push('## Pending Review');
+      pending.forEach(function(i) {
+        lines.push('- **' + i.entry.nodeName + '** (' + i.entry.nodeType + ') — ' + i.summary);
+      });
+      lines.push('');
+    }
+
+    return lines.join('\n');
+  }
+
+  // Highlight node in Figma
+  window.highlightNode = function(nodeId) {
+    parent.postMessage({ pluginMessage: { type: 'highlight-node', nodeId } }, '*');
+  };
+
+  // Timeline
+  var timelineOverlay = document.getElementById('timeline-overlay');
+  var timelineTitle = document.getElementById('timeline-title');
+  var timelineSubtitle = document.getElementById('timeline-subtitle');
+  var timelineEntries = document.getElementById('timeline-entries');
+  var btnTimelineBack = document.getElementById('btn-timeline-back');
+
+  window.showNodeTimeline = function(nodeId, nodeName) {
+    timelineTitle.textContent = nodeName;
+    timelineSubtitle.textContent = 'Loading timeline...';
+    timelineEntries.innerHTML = '';
+    timelineOverlay.classList.add('visible');
+    parent.postMessage({ pluginMessage: { type: 'node-timeline', nodeId: nodeId, nodeName: nodeName } }, '*');
+  };
+
+  btnTimelineBack.addEventListener('click', function() {
+    timelineOverlay.classList.remove('visible');
+  });
+
+  var TRACKED_PROPS = [
+    'name', 'visible', 'locked', 'isMask', 'clipsContent',
+    'x', 'y', 'width', 'height', 'rotation', 'constraints',
+    'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
+    'layoutMode', 'layoutWrap', 'itemSpacing', 'counterAxisSpacing',
+    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+    'primaryAxisSizingMode', 'counterAxisSizingMode',
+    'primaryAxisAlignItems', 'counterAxisAlignItems',
+    'layoutSizingHorizontal', 'layoutSizingVertical',
+    'layoutAlign', 'layoutGrow', 'layoutPositioning',
+    'opacity', 'blendMode', 'fills', 'strokes', 'effects',
+    'cornerRadius', 'cornerSmoothing',
+    'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius',
+    'strokeWeight', 'strokeAlign', 'strokeCap', 'strokeJoin', 'dashPattern',
+    'strokeTopWeight', 'strokeBottomWeight', 'strokeLeftWeight', 'strokeRightWeight',
+    'characters', 'fontSize', 'fontName', 'fontWeight',
+    'textAlignHorizontal', 'textAlignVertical', 'textAutoResize',
+    'lineHeight', 'letterSpacing', 'textDecoration', 'textCase',
+    'paragraphIndent', 'paragraphSpacing'
+  ];
+
+  function renderTimeline(data) {
+    timelineTitle.textContent = data.nodeName;
+    var count = data.timeline.length;
+    timelineSubtitle.textContent = 'Found in ' + count + ' snapshot' + (count !== 1 ? 's' : '');
+
+    if (count === 0) {
+      timelineEntries.innerHTML = '<div class="empty-state">This node was not found in any snapshots.</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < data.timeline.length; i++) {
+      var step = data.timeline[i];
+      var prev = i > 0 ? data.timeline[i - 1] : null;
+      var date = new Date(step.timestamp).toLocaleString();
+
+      var changesHtml = '';
+      if (prev) {
+        var changes = [];
+        for (var p = 0; p < TRACKED_PROPS.length; p++) {
+          var prop = TRACKED_PROPS[p];
+          var oldVal = String(prev.node[prop] !== undefined ? prev.node[prop] : '');
+          var newVal = String(step.node[prop] !== undefined ? step.node[prop] : '');
+          if (oldVal !== newVal) {
+            changes.push(
+              '<div class="timeline-prop">' +
+                '<span class="prop-name">' + esc(prop) + '</span> ' +
+                '<span class="prop-old">' + esc(truncate(oldVal, 30)) + '</span> → ' +
+                '<span class="prop-new">' + esc(truncate(newVal, 30)) + '</span>' +
+              '</div>'
+            );
+          }
+        }
+        if (changes.length > 0) {
+          changesHtml = '<div class="timeline-step-changes">' + changes.join('') + '</div>';
+        } else {
+          changesHtml = '<div class="timeline-no-change">No changes from previous snapshot</div>';
+        }
+      } else {
+        changesHtml = '<div class="timeline-no-change">First appearance</div>';
+      }
+
+      html += '<div class="timeline-step">' +
+        '<div class="timeline-step-label">' + esc(step.snapshotLabel) + '</div>' +
+        '<div class="timeline-step-date">' + date + '</div>' +
+        changesHtml +
+      '</div>';
+    }
+
+    timelineEntries.innerHTML = html;
+  }
+
+  // Export as Markdown
+  btnExport.addEventListener('click', function() {
+    if (!currentChangelog) return;
+    parent.postMessage({ pluginMessage: { type: 'export-changelog', changelog: currentChangelog } }, '*');
+  });
+
+  // Export as JSON
+  document.getElementById('btn-export-json').addEventListener('click', function() {
+    if (!currentChangelog) return;
+    parent.postMessage({ pluginMessage: { type: 'export-json', changelog: currentChangelog } }, '*');
+  });
+
+  // Export as CSV
+  document.getElementById('btn-export-csv').addEventListener('click', function() {
+    if (!currentChangelog) return;
+    parent.postMessage({ pluginMessage: { type: 'export-csv', changelog: currentChangelog } }, '*');
+  });
+
+  // Export review report
+  document.getElementById('btn-export-review').addEventListener('click', function() {
+    if (!currentChangelog) return;
+    var report = generateReviewReport();
+    var textarea = document.createElement('textarea');
+    textarea.value = report;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    showToast('Review report copied to clipboard!', false);
+  });
+
+  // Helpers
+  function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
+  function truncate(str, max) {
+    max = max || 40;
+    if (!str) return '';
+    return str.length > max ? str.substring(0, max) + '...' : str;
+  }
+
+  // Auto-versioning
+  function getNextVersionLabel(snaps) {
+    var max = 0;
+    for (var i = 0; i < snaps.length; i++) {
+      var match = snaps[i].label.match(/^v(\d+)/i);
+      if (match) {
+        var num = parseInt(match[1], 10);
+        if (num > max) max = num;
+      }
+    }
+    return 'v' + (max + 1);
+  }
+
+  function prefillLabel() {
+    var current = snapshotLabel.value.trim();
+    if (current === '' || /^v\d+$/.test(current)) {
+      snapshotLabel.value = getNextVersionLabel(snapshots);
+    }
+  }
+
+  // Messages from plugin
+  window.onmessage = (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+
+    switch (msg.type) {
+      case 'snapshot-list':
+        snapshots = msg.snapshots || [];
+        renderSnapshotList();
+        renderSelects();
+        prefillLabel();
+        break;
+
+      case 'snapshot-saved':
+        showToast(msg.message, false);
+        break;
+
+      case 'snapshot-deleted':
+        showToast(msg.message, false);
+        break;
+
+      case 'changelog-result':
+        currentFromThumbnail = msg.fromThumbnail || null;
+        currentToThumbnail = msg.toThumbnail || null;
+        renderChangelog(msg.changelog);
+        renderVisualPreview();
+        showToast('Changelog generated.', false);
+        break;
+
+      case 'node-timeline':
+        renderTimeline(msg);
+        break;
+
+      case 'review-loaded':
+        reviewState = msg.data || {};
+        updateReviewBar();
+        renderFilteredChangelog();
+        break;
+
+      case 'export-markdown':
+        // Copy to clipboard
+        var ta = document.createElement('textarea');
+        ta.value = msg.markdown;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Markdown copied to clipboard!', false);
+        break;
+
+      case 'export-data': {
+        var ta2 = document.createElement('textarea');
+        ta2.value = msg.data;
+        document.body.appendChild(ta2);
+        ta2.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta2);
+        showToast(msg.format + ' copied to clipboard!', false);
+        break;
+      }
+
+      case 'data-cleared':
+        showToast(msg.message, false);
+        snapshots = [];
+        currentChangelog = null;
+        reviewState = {};
+        renderSnapshotList();
+        renderSelects();
+        prefillLabel();
+        break;
+
+      case 'selection-changed': {
+        var bar = document.getElementById('selection-bar');
+        var text = document.getElementById('sel-text');
+        if (msg.hasSelection) {
+          bar.classList.add('has-selection');
+          text.textContent = msg.nodeName + ' (' + msg.nodeType + ')';
+        } else {
+          bar.classList.remove('has-selection');
+          text.textContent = 'Select a frame in Figma to capture';
+        }
+        break;
+      }
+
+      case 'error':
+        showToast(msg.message, true);
+        break;
+    }
+  };
+
+  // Initial load
+  parent.postMessage({ pluginMessage: { type: 'list-snapshots' } }, '*');
+</script>
+</body>
+</html>

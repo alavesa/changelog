@@ -139,13 +139,20 @@ function serializeNode(node: SceneNode): NodeSnapshot {
 
 const MAX_NODES = 5000;
 
+const MAX_DEPTH = 500;
+
 function walkTree(
   node: SceneNode,
   nodes: Record<string, NodeSnapshot>,
   limit: number,
-  counter: { count: number }
+  counter: { count: number },
+  depth: number
 ): boolean {
   if (counter.count >= limit) return true;
+  if (depth > MAX_DEPTH) {
+    console.warn(`walkTree: max depth (${MAX_DEPTH}) reached at node ${node.id} (${node.name})`);
+    return false;
+  }
   try {
     nodes[node.id] = serializeNode(node);
     counter.count++;
@@ -156,7 +163,7 @@ function walkTree(
 
   if ("children" in node) {
     for (const child of (node as ChildrenMixin & SceneNode).children) {
-      if (walkTree(child as SceneNode, nodes, limit, counter)) return true;
+      if (walkTree(child as SceneNode, nodes, limit, counter, depth + 1)) return true;
     }
   }
   return false;
@@ -189,7 +196,7 @@ export async function captureThumbnail(node: SceneNode): Promise<string | null> 
 export function captureSnapshot(node: SceneNode, label: string): CaptureResult {
   const nodes: Record<string, NodeSnapshot> = {};
   const counter = { count: 0 };
-  const hitLimit = walkTree(node, nodes, MAX_NODES, counter);
+  const hitLimit = walkTree(node, nodes, MAX_NODES, counter, 0);
 
   if (hitLimit) {
     return {

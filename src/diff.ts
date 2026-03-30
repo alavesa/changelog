@@ -275,11 +275,9 @@ export function changelogToCSV(changelog: Changelog): string {
 
 function csvRow(fields: string[]): string {
   return fields.map((f) => {
-    let s = String(f);
-    if (s.startsWith("=") || s.startsWith("+") || s.startsWith("@")) {
-      s = "'" + s;
-    }
-    s = s.replace(/"/g, '""');
-    return s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1 ? `"${s}"` : s;
+    const s = String(f).replace(/"/g, '""');
+    const needsQuote = s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1
+      || s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@");
+    return needsQuote ? `"${s}"` : s;
   }).join(",");
 }

@@ -96,7 +96,6 @@ export interface SnapshotMeta {
   timestamp: number;
   rootNodeName: string;
   nodeCount: number;
-  hasThumbnail?: boolean;
 }
 
 export interface PropertyChange {
