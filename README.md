@@ -4,7 +4,7 @@
 
 A Figma plugin that captures design snapshots and generates visual changelogs. Track how your designs evolve over time by comparing snapshots and seeing exactly what changed — added, removed, or modified nodes with detailed property diffs.
 
-<img width="1920" height="1080" alt="00_composition" src="https://github.com/user-attachments/assets/f7e95859-b1c5-4ba0-8d7a-1058db0e2ae3" />
+![design_trail_demo_small](https://github.com/user-attachments/assets/5b16cb0f-afc0-4245-bead-72614c3c6b1e)
 
 ## Features
 
