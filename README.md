@@ -2,6 +2,8 @@
 
 [![Reviewed by PatchPilots](https://img.shields.io/badge/reviewed%20by-PatchPilots-blue)](https://github.com/alavesa/patchpilots)
 
+Available in Figma community: https://www.figma.com/community/plugin/1619765017994112841/design-trail
+
 A Figma plugin that captures design snapshots and generates visual changelogs. Track how your designs evolve over time by comparing snapshots and seeing exactly what changed — added, removed, or modified nodes with detailed property diffs.
 
 ![design_trail_demo_small](https://github.com/user-attachments/assets/5b16cb0f-afc0-4245-bead-72614c3c6b1e)
@@ -166,7 +168,7 @@ manifest.json   # Figma plugin manifest
 - [x] Create thumbnail image (1920x1080px) — place in `assets/thumbnail.png`
 - [x] Screenshot the capture → compare → changelog flow (up to 9 images) — place in `assets/screenshots/`
 - [x] Write listing description and tagline
-- [x] Submit for Figma review (5-10 business days). Submitted 28.03.2026.
+- [x] Submit for Figma review (5-10 business days). Submitted 28.03.2026, and approved in 6.5.2026.
 
 ## License
 
