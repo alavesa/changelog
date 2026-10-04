@@ -6,7 +6,7 @@ Available in Figma community: https://www.figma.com/community/plugin/16197650179
 
 A Figma plugin that captures design snapshots and generates visual changelogs. Track how your designs evolve over time by comparing snapshots and seeing exactly what changed — added, removed, or modified nodes with detailed property diffs.
 
-![design_trail_demo_small](https://github.com/user-attachments/assets/5b16cb0f-afc0-4245-bead-72614c3c6b1e)
+<img src="docs/design-trail-2.0-promo-4x5.gif" width="480" alt="Design Trail 2.0 — visual changelogs for Figma, and change sets for your AI agents">
 
 ## Features
 
