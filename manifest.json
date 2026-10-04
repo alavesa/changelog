@@ -8,5 +8,18 @@
   "enableProposedApi": false,
   "editorType": ["figma"],
   "networkAccess": { "allowedDomains": ["none"] },
-  "documentAccess": "dynamic-page"
+  "documentAccess": "dynamic-page",
+  "relaunchButtons": [
+    { "command": "capture", "name": "Capture snapshot" },
+    { "command": "compare-current", "name": "Compare with last snapshot" }
+  ],
+  "parameters": [
+    {
+      "name": "Label",
+      "key": "label",
+      "optional": true,
+      "description": "Snapshot label — leave empty for auto version (v1, v2, …)"
+    }
+  ],
+  "parameterOnly": false
 }

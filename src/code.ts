@@ -1,20 +1,35 @@
 import { captureSnapshot, captureThumbnail } from "./snapshot";
-import { compareSnapshots, changelogToMarkdown, changelogToJSON, changelogToCSV } from "./diff";
+import { compareSnapshots, changelogToMarkdown, changelogToJSON, changelogToCSV, changelogToAgentPrompt } from "./diff";
 import { saveSnapshot, getSnapshots, getSnapshot, deleteSnapshot, saveReview, loadReview, saveThumbnail, getThumbnail } from "./storage";
 
+const MIN_W = 320, MAX_W = 800, MIN_H = 480, MAX_H = 1200;
+
 figma.showUI(__html__, { width: 360, height: 520, themeColors: false });
+
+// Restore the last window size (per user, across files)
+figma.clientStorage.getAsync("windowSize").then((size: any) => {
+  if (size && typeof size.w === "number" && typeof size.h === "number") {
+    figma.ui.resize(
+      Math.max(MIN_W, Math.min(MAX_W, size.w)),
+      Math.max(MIN_H, Math.min(MAX_H, size.h))
+    );
+  }
+}).catch(() => {});
 
 // Discriminated union for all incoming plugin messages
 type PluginMessage =
   | { type: "capture-snapshot"; label?: string; annotation?: string }
   | { type: "list-snapshots" }
   | { type: "compare-snapshots"; fromId: string; toId: string }
+  | { type: "compare-with-current"; fromId: string }
   | { type: "delete-snapshot"; id: string }
   | { type: "highlight-node"; nodeId: string }
   | { type: "node-timeline"; nodeId: string; nodeName: string }
   | { type: "export-changelog" }
   | { type: "export-json" }
   | { type: "export-csv" }
+  | { type: "export-agent" }
+  | { type: "resize"; width: number; height: number }
   | { type: "save-review"; key: string; data: any }
   | { type: "load-review"; key: string }
   | { type: "clear-all-data" };
@@ -23,60 +38,176 @@ type PluginMessage =
 // use plugin-owned data instead of UI-supplied data.
 let lastChangelog: ReturnType<typeof compareSnapshots> | null = null;
 
+// Relaunch-button command (manifest relaunchButtons) — executed once the UI
+// has loaded and sent its first list-snapshots message, so result messages
+// are not dropped.
+let pendingCommand: string | null = figma.command || null;
+let pendingQuickLabel: string | null = null;
+
+// Quick-actions launch (manifest parameters): capture immediately, with the
+// typed label or an auto version number.
+figma.on("run", (event) => {
+  if (event.parameters) {
+    const label = event.parameters.label;
+    pendingQuickLabel =
+      typeof label === "string" && label.trim() !== "" ? label.trim() : null;
+    pendingCommand = "quick-capture";
+  }
+});
+
+function nextVersionLabel(): string {
+  let max = 0;
+  for (const meta of getSnapshots()) {
+    const match = meta.label.match(/^v(\d+)/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > max) max = num;
+    }
+  }
+  return "v" + (max + 1);
+}
+
+async function doCapture(label: string, annotation?: string): Promise<void> {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({
+      type: "error",
+      message: "Please select a frame or node to capture.",
+    });
+    return;
+  }
+
+  const node = selection[0];
+  const capture = await captureSnapshot(node, label);
+
+  if (capture.error) {
+    figma.ui.postMessage({ type: "error", message: capture.error });
+    return;
+  }
+
+  const snapshot = capture.snapshot!;
+  if (annotation) {
+    snapshot.annotation = annotation;
+  }
+  const result = saveSnapshot(snapshot);
+
+  if (result.ok) {
+    let message = result.message;
+    if (capture.warning) {
+      message += " ⚠ " + capture.warning;
+    }
+    figma.ui.postMessage({ type: "snapshot-saved", message });
+    const list = getSnapshots();
+    figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
+
+    // Surface the plugin on the frame itself: everyone who selects it sees
+    // Capture / Compare actions in the right sidebar.
+    try {
+      node.setRelaunchData({
+        capture: "Capture a new snapshot of this frame",
+        "compare-current": "Compare the latest snapshot with the current state",
+      });
+    } catch (e) {
+      console.warn("setRelaunchData skipped:", e);
+    }
+
+    // Capture thumbnail after UI is updated (non-blocking)
+    try {
+      const thumb = await captureThumbnail(node);
+      if (thumb) {
+        saveThumbnail(snapshot.id, thumb);
+      }
+    } catch (e) {
+      console.warn("Thumbnail capture skipped:", e);
+    }
+  } else {
+    figma.ui.postMessage({ type: "error", message: result.message });
+  }
+}
+
+// Diff a stored snapshot against the live state of the current selection —
+// an in-memory capture that is never saved, so no second snapshot is needed
+// to answer "what changed since vN?".
+async function doCompareWithCurrent(fromId: string): Promise<void> {
+  const oldSnap = getSnapshot(fromId);
+  if (!oldSnap) {
+    figma.ui.postMessage({ type: "error", message: "Could not load the snapshot." });
+    return;
+  }
+
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({
+      type: "error",
+      message: "Select a frame to compare against the snapshot.",
+    });
+    return;
+  }
+
+  const node = selection[0];
+  const capture = await captureSnapshot(node, "Current state");
+  if (capture.error) {
+    figma.ui.postMessage({ type: "error", message: capture.error });
+    return;
+  }
+
+  // Stable id keeps the review key ("review_<from>_<to>") from multiplying
+  // across repeated live compares.
+  capture.snapshot!.id = "__current__";
+  const changelog = compareSnapshots(oldSnap, capture.snapshot!);
+  lastChangelog = changelog;
+  const fromThumbnail = getThumbnail(fromId);
+  let toThumbnail: string | null = null;
+  try {
+    toThumbnail = await captureThumbnail(node);
+  } catch (e) {
+    console.warn("Live thumbnail skipped:", e);
+  }
+  figma.ui.postMessage({ type: "changelog-result", changelog, fromThumbnail, toThumbnail });
+}
+
+async function runPendingCommand(): Promise<void> {
+  const command = pendingCommand;
+  pendingCommand = null;
+  if (command === "capture" || command === "quick-capture") {
+    const label = pendingQuickLabel || nextVersionLabel();
+    pendingQuickLabel = null;
+    await doCapture(label);
+  } else if (command === "compare-current") {
+    const list = getSnapshots();
+    if (list.length === 0) {
+      figma.ui.postMessage({
+        type: "error",
+        message: "No snapshots yet — capture one first.",
+      });
+      return;
+    }
+    await doCompareWithCurrent(list[list.length - 1].id);
+  }
+}
+
 async function handleMessage(msg: PluginMessage) {
   switch (msg.type) {
     case "capture-snapshot": {
-      const selection = figma.currentPage.selection;
-      if (selection.length === 0) {
-        figma.ui.postMessage({
-          type: "error",
-          message: "Please select a frame or node to capture.",
-        });
-        return;
-      }
-
-      const node = selection[0];
-      const label = msg.label || `Snapshot ${Date.now()}`;
-      const capture = captureSnapshot(node, label);
-
-      if (capture.error) {
-        figma.ui.postMessage({ type: "error", message: capture.error });
-        return;
-      }
-
-      const snapshot = capture.snapshot!;
-      if (msg.annotation) {
-        snapshot.annotation = msg.annotation;
-      }
-      const result = saveSnapshot(snapshot);
-
-      if (result.ok) {
-        let message = result.message;
-        if (capture.warning) {
-          message += " ⚠ " + capture.warning;
-        }
-        figma.ui.postMessage({ type: "snapshot-saved", message });
-        const list = getSnapshots();
-        figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
-
-        // Capture thumbnail after UI is updated (non-blocking)
-        try {
-          const thumb = await captureThumbnail(node);
-          if (thumb) {
-            saveThumbnail(snapshot.id, thumb);
-          }
-        } catch (e) {
-          console.warn("Thumbnail capture skipped:", e);
-        }
-      } else {
-        figma.ui.postMessage({ type: "error", message: result.message });
-      }
+      await doCapture(msg.label || `Snapshot ${Date.now()}`, msg.annotation);
       break;
     }
 
     case "list-snapshots": {
       const list = getSnapshots();
       figma.ui.postMessage({ type: "snapshot-list", snapshots: list });
+      if (pendingCommand) {
+        await runPendingCommand();
+      }
+      break;
+    }
+
+    case "compare-with-current": {
+      if (!msg.fromId) {
+        figma.ui.postMessage({ type: "error", message: "Invalid snapshot ID." });
+        return;
+      }
+      await doCompareWithCurrent(msg.fromId);
       break;
     }
 
@@ -221,6 +352,25 @@ async function handleMessage(msg: PluginMessage) {
       }
       const csv = changelogToCSV(lastChangelog);
       figma.ui.postMessage({ type: "export-data", data: csv, format: "CSV" });
+      break;
+    }
+
+    case "export-agent": {
+      if (!lastChangelog) {
+        figma.ui.postMessage({ type: "error", message: "No changelog available to export." });
+        return;
+      }
+      const prompt = changelogToAgentPrompt(lastChangelog, figma.root.name);
+      figma.ui.postMessage({ type: "export-data", data: prompt, format: "AI prompt" });
+      break;
+    }
+
+    case "resize": {
+      if (typeof msg.width !== "number" || typeof msg.height !== "number") return;
+      const w = Math.max(MIN_W, Math.min(MAX_W, Math.round(msg.width)));
+      const h = Math.max(MIN_H, Math.min(MAX_H, Math.round(msg.height)));
+      figma.ui.resize(w, h);
+      figma.clientStorage.setAsync("windowSize", { w, h }).catch(() => {});
       break;
     }
 

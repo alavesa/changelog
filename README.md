@@ -16,10 +16,16 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 - **Quick compare** — one-click comparison of your two most recent snapshots
 - **Auto-versioning** — snapshot labels auto-suggest `v1`, `v2`, `v3`, etc.
 - **Relative timestamps** — "2m ago", "1h ago" instead of full dates for easier scanning
+- **Quick-action capture** — run "Design Trail" from Figma's quick actions with an optional label, no UI needed
+- **Resizable window** — drag the bottom-right grip; the size is remembered
+- **Flicker preview** — alternate before/after in one pane with a stable layout; changed pixels pop out while everything else holds still
+- **Filter chip counts** — see how many entries each change group has before clicking
 
 ### Capture & compare
 - **Capture snapshots** of any selected frame or node
 - **Compare snapshots** to generate a structured changelog
+- **Compare against the live canvas** — diff any snapshot directly against the current selection ("To: Current selection"), no second capture needed
+- **Relaunch buttons** — frames with snapshots show "Capture snapshot" / "Compare with last snapshot" actions in Figma's right sidebar, for you and everyone else in the file
 - **Visual side-by-side preview** — before/after thumbnails captured automatically
 - **Visual diff** showing added, removed, and modified nodes with property-level detail
 - **Annotations** — add notes to snapshots explaining *why* something changed
@@ -28,18 +34,21 @@ A Figma plugin that captures design snapshots and generates visual changelogs. T
 ### Changelog & review
 - **Smart summaries** — plain-English descriptions: "Moved right by 10px. Font changed to Inter Bold."
 - **Collapsible details** — summary first, expand for property-level diffs
-- **Filter & search** — filter by change group (style, layout, typography, structure, naming) or search by node name — each category color-coded throughout the UI
+- **Filter & search** — filter by change group (style, layout, typography, structure, naming, tokens) or search by node name — each category color-coded throughout the UI
+- **Design token awareness** — changes show variable/style names ("color/brand/primary → color/brand/accent") alongside raw values, including detecting when a property is bound to or detached from a token, and when a token's **own value** is edited ("color/alarm/red = #e03131 → #ff2040")
 - **Color-coded group badges** — visible on every entry without expanding, matching filter chip colors
 - **Click to highlight** — jump to any changed node in your Figma file
 - **Snapshot timeline** — view how a single node evolved across multiple snapshots
 - **Design review mode** — approve, flag, or comment on each change. Export a structured review report.
 - **Export as Markdown, JSON, or CSV** for sharing changelogs with your team or feeding into external tools
+- **Copy for AI** — export the change set as a ready-to-paste prompt for AI coding assistants (Claude Code, Cursor, Copilot), so the agent can update the implementation from the design diff instead of re-reading the whole design
 - **Enter key shortcut** — press Enter to capture a snapshot instantly
 
 ### Collaboration
 - **Shared with team** — all snapshots, changelogs, and reviews are saved to the Figma file, visible to everyone
 - **Deep property tracking** — ~30 key properties across layout, style, typography, structure, and naming
-- **Dynamic limits display** — see snapshot usage (X/20) with color warnings when nearing capacity
+- **Dynamic limits display** — see snapshot usage (X/50) with color warnings when nearing capacity
+- **Compressed storage** — snapshots are lz-string compressed, fitting ~3–4× more data in the file
 - **Consistent visual theme** — UI styled to match portfolio blue/slate palette, with per-category color coding
 
 ## Using Design Trail in your workflow
@@ -151,13 +160,14 @@ manifest.json   # Figma plugin manifest
 
 ### Mid-term
 - [x] Visual side-by-side preview — capture thumbnail exports at snapshot time, show before/after images
-- [ ] Compare across different root nodes — match by node name/structure instead of ID
+- [x] Compare across different root nodes — match by node name/structure instead of ID
 - [x] Export to JSON/CSV for external tools and design system docs
+- [x] "Copy for AI" export — change set formatted as a prompt for AI coding assistants
 - [ ] Auto-snapshot on page change or interval *(deferred to v2 — storage limits make this tricky)*
 
 ### Long-term
 - [ ] Component-level tracking — detect component swaps and detaches
-- [ ] Design token awareness — map raw fill/stroke values to variable/style names
+- [x] Design token awareness — map raw fill/stroke values to variable/style names
 - [ ] Team changelog — aggregate changelogs across multiple pages/files
 - [ ] Slack/webhook integration — post changelogs to a channel automatically
 

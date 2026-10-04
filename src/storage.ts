@@ -1,3 +1,4 @@
+import { compressToUTF16, decompressFromUTF16 } from "lz-string";
 import { Snapshot, SnapshotMeta } from "./types";
 
 // Uses figma.root.setPluginData / getPluginData so that all data is saved
@@ -8,13 +9,24 @@ const SNAP_PREFIX = "changelog_snap_";
 const CHUNK_PREFIX = "changelog_chunk_";
 const THUMB_PREFIX = "changelog_thumb_";
 const REVIEW_PREFIX = "changelog_review_";
-const MAX_SNAPSHOTS = 20;
+const MAX_SNAPSHOTS = 50;
 const CHUNK_SIZE = 50; // nodes per chunk
+
+// Values are lz-string compressed to fit far more data under Figma's
+// per-entry pluginData limit. The marker distinguishes compressed
+// values from legacy plain-JSON ones (JSON never starts with a control
+// character), so snapshots saved by older versions still load.
+const LZ_MARK = "\u0001LZ";
 
 function getData(key: string): any {
   try {
     const raw = figma.root.getPluginData(key);
     if (!raw) return null;
+    if (raw.lastIndexOf(LZ_MARK, 0) === 0) {
+      const json = decompressFromUTF16(raw.slice(LZ_MARK.length));
+      if (!json) return null;
+      return JSON.parse(json);
+    }
     return JSON.parse(raw);
   } catch (e) {
     console.error("getData error for key", key, e);
@@ -25,7 +37,7 @@ function getData(key: string): any {
 function setData(key: string, value: any): void {
   try {
     const json = JSON.stringify(value);
-    figma.root.setPluginData(key, json);
+    figma.root.setPluginData(key, LZ_MARK + compressToUTF16(json));
   } catch (e) {
     console.error("setData error for key", key, e);
     throw e;

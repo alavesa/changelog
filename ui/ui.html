@@ -232,6 +232,7 @@
   .badge-group-style     { background: rgba(244,114,182,0.15); color: #f472b6; }
   .badge-group-typography{ background: rgba(52,211,153,0.15);  color: #34d399; }
   .badge-group-naming    { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+  .badge-group-token     { background: rgba(34,211,238,0.15);  color: #22d3ee; }
 
   .change-node-name {
     font-weight: 600;
@@ -411,6 +412,49 @@
   .filter-chip[data-group="style"].active { border-color: #f472b6; color: #f472b6; background: rgba(244,114,182,0.1); }
   .filter-chip[data-group="typography"].active { border-color: #34d399; color: #34d399; background: rgba(52,211,153,0.1); }
   .filter-chip[data-group="naming"].active { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.1); }
+  .filter-chip[data-group="token"].active { border-color: #22d3ee; color: #22d3ee; background: rgba(34,211,238,0.1); }
+  .filter-chip .chip-count { opacity: 0.65; margin-left: 3px; font-size: 9px; }
+  .preview-toggle {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    font-size: 9px;
+    padding: 3px 8px;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #94a3b8;
+    cursor: pointer;
+  }
+  .preview-toggle:hover { border-color: #60a5fa; color: #60a5fa; }
+  .preview-stack { display: grid; user-select: none; }
+  .preview-stack img {
+    grid-area: 1 / 1;
+    display: block;
+    width: 100%;
+    align-self: start;
+  }
+  .preview-stack .stack-top { opacity: 0; }
+  #resize-grip {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    z-index: 1000;
+    background:
+      linear-gradient(135deg, transparent 50%, #334155 50%, #334155 56%, transparent 56%,
+        transparent 65%, #334155 65%, #334155 71%, transparent 71%,
+        transparent 80%, #334155 80%, #334155 86%, transparent 86%);
+  }
+  #resize-grip:hover {
+    background:
+      linear-gradient(135deg, transparent 50%, #60a5fa 50%, #60a5fa 56%, transparent 56%,
+        transparent 65%, #60a5fa 65%, #60a5fa 71%, transparent 71%,
+        transparent 80%, #60a5fa 80%, #60a5fa 86%, transparent 86%);
+  }
 
   /* Toast */
   .toast {
@@ -642,6 +686,7 @@
 
   /* Visual preview */
   .visual-preview {
+    position: relative;
     display: flex;
     gap: 8px;
     margin-bottom: 12px;
@@ -715,7 +760,7 @@
   </div>
   <button id="btn-capture">Capture Snapshot</button>
   <div id="limits-info" style="margin-top:8px;padding:8px 10px;background:#0d1b2e;border-radius:4px;font-size:10px;color:#94a3b8;line-height:1.5;">
-    <strong style="color:#999;">0/20 snapshots</strong> · Up to 5,000 nodes per snapshot
+    <strong style="color:#999;">0/50 snapshots</strong> · Up to 5,000 nodes per snapshot
   </div>
   <div class="snapshot-list" id="snapshot-list"></div>
   <button class="danger" id="btn-clear-all" style="margin-top:12px;width:100%;font-size:10px;padding:6px;" onclick="if(confirm('Clear all snapshots and reviews from this file?')){parent.postMessage({pluginMessage:{type:'clear-all-data'}},'*')}">Clear All Data</button>
@@ -753,11 +798,12 @@
   <div id="changelog-content" style="display: none;">
     <div class="comparison-header" id="comparison-header"></div>
     <div id="visual-preview" class="visual-preview" style="display:none;">
-      <div class="preview-pane">
-        <div class="preview-label">Before</div>
+      <button id="btn-preview-mode" class="preview-toggle" title="Alternate before/after in one pane — changed pixels pop out">Flicker</button>
+      <div class="preview-pane" id="preview-pane-left">
+        <div class="preview-label" id="preview-label-left">Before</div>
         <div id="preview-before"></div>
       </div>
-      <div class="preview-pane">
+      <div class="preview-pane" id="preview-pane-right">
         <div class="preview-label">After</div>
         <div id="preview-after"></div>
       </div>
@@ -777,6 +823,7 @@
         <button class="filter-chip" data-group="style">Style</button>
         <button class="filter-chip" data-group="typography">Typography</button>
         <button class="filter-chip" data-group="naming">Naming</button>
+        <button class="filter-chip" data-group="token">Tokens</button>
       </div>
     </div>
     <div id="changelog-entries"></div>
@@ -787,9 +834,12 @@
     </div>
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button id="btn-export-review" class="secondary" style="flex:1;">Copy Review Report</button>
+      <button id="btn-export-agent" class="secondary" style="flex:1;" title="Copy a change set formatted for AI coding assistants (Claude Code, Cursor, Copilot)">Copy for AI</button>
     </div>
   </div>
 </div>
+
+<div id="resize-grip" title="Drag to resize"></div>
 
 <div class="timeline-overlay" id="timeline-overlay">
   <div class="timeline-header">
@@ -918,8 +968,8 @@
     var el = document.getElementById('limits-info');
     if (!el) return;
     var count = snapshots.length;
-    var color = count >= 18 ? '#FF9800' : (count >= 20 ? '#F44336' : '#999');
-    el.innerHTML = '<strong style="color:' + color + ';">' + count + '/20 snapshots</strong> \u00b7 Up to 5,000 nodes per snapshot';
+    var color = count >= 50 ? '#F44336' : (count >= 45 ? '#FF9800' : '#999');
+    el.innerHTML = '<strong style="color:' + color + ';">' + count + '/50 snapshots</strong> \u00b7 Up to 5,000 nodes per snapshot';
   }
 
   function renderSnapshotList() {
@@ -957,17 +1007,25 @@
     var options = reversed.map(function(s) {
       return '<option value="' + s.id + '">' + esc(s.label) + ' (' + timeAgo(s.timestamp) + ')</option>';
     }).join('');
+    var currentOption = '<option value="__current__">Current selection (live)</option>';
 
-    if (snapshots.length < 2) {
-      selectFrom.innerHTML = '<option value="">Need at least 2 snapshots</option>';
-      selectTo.innerHTML = '<option value="">Need at least 2 snapshots</option>';
+    if (snapshots.length === 0) {
+      selectFrom.innerHTML = '<option value="">No snapshots yet</option>';
+      selectTo.innerHTML = '<option value="">No snapshots yet</option>';
       btnCompare.disabled = true;
     } else {
+      // One snapshot is enough: it can be compared against the live canvas.
       selectFrom.innerHTML = options;
-      selectTo.innerHTML = options;
-      // Default: latest=to (index 0), second latest=from (index 1)
-      selectFrom.selectedIndex = 1;
-      selectTo.selectedIndex = 0;
+      selectTo.innerHTML = currentOption + options;
+      if (snapshots.length >= 2) {
+        // Default: second latest → latest snapshot ("to" index 0 is the
+        // live-selection option, so the latest snapshot sits at index 1)
+        selectFrom.selectedIndex = 1;
+        selectTo.selectedIndex = 1;
+      } else {
+        selectFrom.selectedIndex = 0;
+        selectTo.selectedIndex = 0; // current selection
+      }
       btnCompare.disabled = false;
     }
   }
@@ -990,6 +1048,10 @@
     const fromId = selectFrom.value;
     const toId = selectTo.value;
     if (!fromId || !toId) return;
+    if (toId === '__current__') {
+      parent.postMessage({ pluginMessage: { type: 'compare-with-current', fromId } }, '*');
+      return;
+    }
     if (fromId === toId) {
       showToast('Please select two different snapshots.', true);
       return;
@@ -998,10 +1060,25 @@
   });
 
   // Render changelog
+  var previewMode = 'side'; // 'side' | 'flicker'
+  var flickerTimer = null;
+
+  function stopFlicker() {
+    if (flickerTimer) {
+      clearInterval(flickerTimer);
+      flickerTimer = null;
+    }
+  }
+
   function renderVisualPreview() {
     var container = document.getElementById('visual-preview');
     var beforeEl = document.getElementById('preview-before');
     var afterEl = document.getElementById('preview-after');
+    var paneRight = document.getElementById('preview-pane-right');
+    var labelLeft = document.getElementById('preview-label-left');
+    var toggleBtn = document.getElementById('btn-preview-mode');
+
+    stopFlicker();
 
     if (!currentFromThumbnail && !currentToThumbnail) {
       container.style.display = 'none';
@@ -1009,6 +1086,34 @@
     }
 
     container.style.display = 'flex';
+    var both = !!(currentFromThumbnail && currentToThumbnail);
+    toggleBtn.style.display = both ? 'block' : 'none';
+
+    if (previewMode === 'flicker' && both) {
+      // Single pane alternating Before/After. Both images live in the same
+      // grid cell, so the pane sizes to the larger one once and only
+      // opacity toggles — no reloads, no layout jumps.
+      paneRight.style.display = 'none';
+      toggleBtn.textContent = 'Side by side';
+      labelLeft.textContent = 'Before';
+      beforeEl.innerHTML =
+        '<div class="preview-stack">' +
+          '<img src="' + currentFromThumbnail + '" alt="Before">' +
+          '<img src="' + currentToThumbnail + '" alt="After" class="stack-top">' +
+        '</div>';
+      var topImg = beforeEl.querySelector('.stack-top');
+      var showAfter = false;
+      flickerTimer = setInterval(function() {
+        showAfter = !showAfter;
+        topImg.style.opacity = showAfter ? '1' : '0';
+        labelLeft.textContent = showAfter ? 'After' : 'Before';
+      }, 700);
+      return;
+    }
+
+    paneRight.style.display = '';
+    labelLeft.textContent = 'Before';
+    toggleBtn.textContent = 'Flicker';
 
     beforeEl.innerHTML = currentFromThumbnail
       ? '<img src="' + currentFromThumbnail + '" alt="Before">'
@@ -1018,6 +1123,11 @@
       ? '<img src="' + currentToThumbnail + '" alt="After">'
       : '<div class="preview-placeholder">No preview</div>';
   }
+
+  document.getElementById('btn-preview-mode').addEventListener('click', function() {
+    previewMode = previewMode === 'side' ? 'flicker' : 'side';
+    renderVisualPreview();
+  });
 
   function renderChangelog(changelog) {
     currentChangelog = changelog;
@@ -1074,8 +1184,33 @@
     renderFilteredChangelog();
   });
 
+  var CHIP_LABELS = { all: 'All', structure: 'Structure', layout: 'Layout', style: 'Style', typography: 'Typography', naming: 'Naming', token: 'Tokens' };
+
+  // Show per-group entry counts on the filter chips so you can see where
+  // the changes are before clicking.
+  function updateChipCounts() {
+    var counts = { structure: 0, layout: 0, style: 0, typography: 0, naming: 0, token: 0 };
+    var total = 0;
+    if (currentChangelog) {
+      total = currentChangelog.entries.length;
+      currentChangelog.entries.forEach(function(e) {
+        var seen = {};
+        e.changes.forEach(function(c) { seen[c.group] = true; });
+        Object.keys(seen).forEach(function(g) {
+          if (counts[g] !== undefined) counts[g]++;
+        });
+      });
+    }
+    document.querySelectorAll('.filter-chip').forEach(function(chip) {
+      var g = chip.getAttribute('data-group');
+      var n = g === 'all' ? total : counts[g];
+      chip.innerHTML = esc(CHIP_LABELS[g] || g) + (n > 0 ? '<span class="chip-count">' + n + '</span>' : '');
+    });
+  }
+
   function renderFilteredChangelog() {
     if (!currentChangelog) return;
+    updateChipCounts();
 
     var searchTerm = changelogSearch.value.trim().toLowerCase();
     var filtered = currentChangelog.entries.filter(function(entry) {
@@ -1252,6 +1387,20 @@
     // Clip content
     if (changeMap.clipsContent) sentences.push(changeMap.clipsContent.newValue === 'true' ? 'Clip content enabled' : 'Clip content disabled');
 
+    // Design tokens
+    entry.changes.forEach(function(c) {
+      if (c.group !== 'token') return;
+      var propName = c.property.slice(6);
+      var propLabel = (PROP_LABELS[propName] || propName).toLowerCase();
+      if (c.oldValue === '(none)') {
+        sentences.push('Bound ' + propLabel + ' to token "' + c.newValue + '"');
+      } else if (c.newValue === '(detached)') {
+        sentences.push('Detached ' + propLabel + ' from token "' + c.oldValue + '"');
+      } else {
+        sentences.push(propLabel.charAt(0).toUpperCase() + propLabel.slice(1) + ' token changed from "' + c.oldValue + '" to "' + c.newValue + '"');
+      }
+    });
+
     if (sentences.length === 0) sentences.push(entry.changes.length + ' properties changed');
     return sentences.join('. ') + '.';
   }
@@ -1289,7 +1438,9 @@
     textAutoResize: 'Auto resize', lineHeight: 'Line height',
     letterSpacing: 'Letter spacing', textDecoration: 'Decoration',
     textCase: 'Text case', paragraphIndent: 'Indent', paragraphSpacing: 'Para spacing',
-    name: 'Name', children: 'Children'
+    name: 'Name', children: 'Children',
+    fillStyle: 'Fill style', strokeStyle: 'Stroke style',
+    effectStyle: 'Effect style', textStyle: 'Text style'
   };
 
   function groupChanges(changes) {
@@ -1308,6 +1459,10 @@
         var oldVals = memberChanges.map(function(ch) { return ch.oldValue || '0'; }).join('/');
         var newVals = memberChanges.map(function(ch) { return ch.newValue || '0'; }).join('/');
         grouped.push({ label: mergeKey, group: c.group, oldValue: oldVals, newValue: newVals });
+      } else if (c.property.indexOf('token:') === 0) {
+        var tokenProp = c.property.slice(6);
+        var tokenLabel = (PROP_LABELS[tokenProp] || tokenProp) + ' token';
+        grouped.push({ label: tokenLabel, group: c.group, oldValue: c.oldValue, newValue: c.newValue });
       } else {
         var label = PROP_LABELS[c.property] || c.property;
         grouped.push({ label: label, group: c.group, oldValue: c.oldValue, newValue: c.newValue });
@@ -1601,6 +1756,12 @@
     parent.postMessage({ pluginMessage: { type: 'export-csv', changelog: currentChangelog } }, '*');
   });
 
+  // Export change set formatted for AI coding assistants
+  document.getElementById('btn-export-agent').addEventListener('click', function() {
+    if (!currentChangelog) return;
+    parent.postMessage({ pluginMessage: { type: 'export-agent' } }, '*');
+  });
+
   // Export review report
   document.getElementById('btn-export-review').addEventListener('click', function() {
     if (!currentChangelog) return;
@@ -1647,6 +1808,35 @@
       snapshotLabel.value = getNextVersionLabel(snapshots);
     }
   }
+
+  // Window resize via the bottom-right grip; the plugin sandbox clamps,
+  // applies, and remembers the size.
+  (function() {
+    var grip = document.getElementById('resize-grip');
+    var raf = null;
+    grip.addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      grip.setPointerCapture(e.pointerId);
+      function onMove(ev) {
+        if (raf) return;
+        raf = requestAnimationFrame(function() {
+          raf = null;
+          parent.postMessage({ pluginMessage: {
+            type: 'resize',
+            width: Math.round(ev.clientX) + 8,
+            height: Math.round(ev.clientY) + 8
+          } }, '*');
+        });
+      }
+      function onUp(ev) {
+        grip.releasePointerCapture(ev.pointerId);
+        grip.removeEventListener('pointermove', onMove);
+        grip.removeEventListener('pointerup', onUp);
+      }
+      grip.addEventListener('pointermove', onMove);
+      grip.addEventListener('pointerup', onUp);
+    });
+  })();
 
   // Messages from plugin
   window.onmessage = (event) => {

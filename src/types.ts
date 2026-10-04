@@ -74,6 +74,8 @@ export interface NodeSnapshot {
   maxWidth?: number | string;
   minHeight?: number | string;
   maxHeight?: number | string;
+  // Design tokens — property name → resolved variable/style name
+  tokens?: Record<string, string>;
   // Children IDs only
   children?: string[];
 }
@@ -100,7 +102,7 @@ export interface SnapshotMeta {
 
 export interface PropertyChange {
   property: string;
-  group: "structure" | "layout" | "style" | "typography" | "naming";
+  group: "structure" | "layout" | "style" | "typography" | "naming" | "token";
   oldValue: string;
   newValue: string;
 }
@@ -116,6 +118,7 @@ export interface ChangeEntry {
 export interface Changelog {
   fromSnapshot: { id: string; label: string; timestamp: number };
   toSnapshot: { id: string; label: string; timestamp: number };
+  rootNodeName?: string;
   summary: { added: number; removed: number; modified: number };
   entries: ChangeEntry[];
 }
